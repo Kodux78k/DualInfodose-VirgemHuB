@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>Costa & Ribeiro – Infodose Ateliê (PWA + Live)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#0b0b0f" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+<!-- Ícones -->
+<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png" />
+
+<style>
+/* MOBILE-FIRST VERTICAL HARD-LOCK */
+:root{
+  --bg: linear-gradient(42deg,#00ffaacc,#8800ffaa);
+  --bg-solid: #0b0b0f;
+  --card: #ffffff15;
+  --card-b: #ffffff22;
+  --text: #ffffff;
+  --muted: #d7e7e2;
+  --accent: #00ffc8cc;
+  --accent-text:#001b14;
+  --ok:#00ffdf;
+  --danger:#ff7b7b;
+  --warn:#ffd27b;
+  --info:#7bb6ff;
+}
+body.light{
+  --bg: linear-gradient(42deg,#e8fff3,#e7f4ff);
+  --bg-solid:#f7fbff;
+  --card:#00000008;
+  --card-b:#00000012;
+  --text:#0a1110;
+  --muted:#2a3a36;
+  --accent:#00d7b0;
+  --accent-text:#002015;
+  --ok:#007e6d;
+  --danger:#ff9a9a;
+  --warn:#ffdf9a;
+  --info:#3b6fff;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Inter,system-ui,sans-serif;}
+body{
+  background:var(--bg);
+  min-height:100vh;
+  padding:16px;
+  color:var(--text);
+}
+header{
+  position:relative; top:0; z-index:5;
+  background:transparent;
+  padding-bottom:8px;
+}
+h1{
+  text-align:center;
+  margin:6px 0 10px;
+  font-size:1.7rem;
+  font-weight:800;
+}
+.sub{
+  text-align:center;
+  font-size:.95rem;
+  color:var(--muted);
+  margin-bottom:10px;
+}
+.row{display:block; width:100%;}
+.card{
+  background:var(--card);
+  padding:14px;
+  border-radius:14px;
+  margin-bottom:12px;
+  backdrop-filter:blur(8px);
+  border:1px solid var(--card-b);
+}
+label{font-weight:600;display:block;margin:8px 0 4px;}
+input,select,textarea{
+  width:100%;
+  padding:10px;
+  border-radius:10px;
+  border:none;
+  margin-bottom:8px;
+  background:var(--card-b);
+  color:var(--text);
+  font-size:1rem;
+  outline:none;
+}
+textarea{min-height:72px; resize:vertical;}
+button{
+  width:100%;
+  padding:13px;
+  font-size:1.05rem;
+  border:none;
+  border-radius:12px;
+  background:var(--accent);
+  color:var(--accent-text);
+  font-weight:800;
+  margin-top:6px;
+  cursor:pointer;
+}
+.btn-ghost{
+  background:transparent;
+  border:1px dashed var(--card-b);
+  color:var(--text);
+}
+.btn-danger{ background:var(--danger); color:#180000; }
+.btn-warn{ background:var(--warn); color:#1b1200; }
+.btn-info{ background:var(--info); color:#050914; }
+
+.inline-actions{
+  display:flex; gap:8px; margin-top:8px;
+}
+.inline-actions > button{ flex:1; }
+
+.badge{
+  display:inline-block;
+  padding:4px 8px;
+  border-radius:999px;
+  background:var(--card-b);
+  font-size:.85rem;
+  color:var(--muted);
+}
+
+#resultado{
+  background:var(--card-b);
+  padding:12px;
+  border-radius:12px;
+  margin-top:8px;
+}
+
+.result-item{
+  margin-bottom:6px;
+  font-size:1.05rem;
+}
+.result-item span{font-weight:800;color:var(--ok);}
+
+#liveBox{
+  background:var(--card-b);
+  padding:10px;
+  border-radius:10px;
+  margin-top:8px;
+  font-size:.95rem;
+  color:var(--muted);
+}
+
+#infodoseSug{
+  margin-top:10px;
+  background:var(--card-b);
+  padding:12px;
+  border-radius:10px;
+  display:none;
+}
+.sug-title{font-weight:800;margin-bottom:6px;}
+.sug-line{margin-bottom:4px;}
+.sug-line b{color:var(--ok);}
+
+.table-wrap{
+  overflow-x:auto;
+  border-radius:12px;
+  border:1px solid var(--card-b);
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:880px;
+}
+th,td{
+  padding:10px;
+  border-bottom:1px solid var(--card-b);
+  text-align:left;
+  font-size:.95rem;
+}
+th{font-weight:800;background:var(--card); position:sticky; top:0;}
+
+td.actions{
+  white-space:nowrap;
+}
+td.actions button{
+  width:auto; padding:6px 8px; font-size:.85rem; margin:0 4px 0 0;
+}
+
+footer{
+  text-align:center;
+  font-size:.85rem;
+  color:var(--muted);
+  margin:12px 0 30px;
+}
+
+/* Impressão otimizada */
+@media print{
+  body{background:#fff; color:#000; padding:0;}
+  header,.no-print{display:none !important;}
+  .card{background:#fff; border:none; margin:0; padding:0;}
+  table{min-width:unset;}
+  th,td{border-color:#ddd; font-size:12px;}
+}
+</style>
+</head>
+
+<body>
+<header class="no-print">
+  <h1>Infodose – Costa & Ribeiro Ateliê</h1>
+  <div class="sub">Custo • Preço • Catálogo vivo • Infodose Live</div>
+
+  <div class="card">
+    <div style="display:flex;gap:8px;align-items:center;">
+      <span class="badge">Tema</span>
+      <button class="btn-ghost" id="themeBtn" onclick="toggleTheme()">Alternar Diurno/Noturno</button>
+      <button class="btn-ghost" id="installBtn" style="display:none;">Instalar App</button>
+    </div>
+  </div>
+</header>
+
+<!-- INFODOSE LIVE PANEL -->
+<section class="card no-print">
+  <h2 style="font-size:1.15rem;font-weight:800;margin-bottom:6px;">Infodose Live (Sugestões Inteligentes)</h2>
+
+  <label>Provider</label>
+  <select id="aiProvider">
+    <option value="openai">OpenAI Responses API</option>
+    <option value="openrouter">OpenRouter (compatível)</option>
+    <option value="custom">Endpoint Custom / Proxy</option>
+  </select>
+
+  <label>API Key (fica salva localmente)</label>
+  <input id="aiKey" type="password" placeholder="sk-..." />
+
+  <label>Modelo</label>
+  <input id="aiModel" placeholder="Ex: gpt-4.1-mini / gpt-5 / etc" />
+
+  <label>Endpoint (auto se OpenAI / OpenRouter)</label>
+  <input id="aiEndpoint" placeholder="https://api.openai.com/v1/responses" />
+
+  <div class="inline-actions">
+    <button class="btn-ghost" onclick="saveAISettings()">Salvar Config</button>
+    <button class="btn-ghost" onclick="testAI()">Testar Conexão</button>
+  </div>
+
+  <div id="liveBox">Status: <b id="liveStatus">desligado</b></div>
+</section>
+
+<!-- CADASTRO DE PEÇA -->
+<section class="card">
+  <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:6px;">Cadastro rápido de peça</h2>
+
+  <label>Nome da peça</label>
+  <input id="nomePeca" placeholder="Ex: Vestido Flor Nebula" />
+
+  <label>Material (tecido) – valor por metro (R$)</label>
+  <input type="number" id="valorMetro" placeholder="Ex: 32" />
+
+  <label>Metros usados por peça</label>
+  <input type="number" id="qtdMetroPeca" placeholder="Ex: 0.65" />
+
+  <label>Aviamentos (R$)</label>
+  <input type="number" id="aviamentos" placeholder="Ex: 4.50" />
+
+  <label>Custo costureira (R$)</label>
+  <input type="number" id="costureira" placeholder="Ex: 15" />
+
+  <label>Frete / Transporte (R$)</label>
+  <input type="number" id="frete" placeholder="Ex: 6" />
+
+  <label>Embalagem (R$)</label>
+  <input type="number" id="embalagem" placeholder="Ex: 2" />
+
+  <label>Despesas extras (R$)</label>
+  <input type="number" id="extras" placeholder="Ex: 3" />
+
+  <label>Etiquetas por peça (R$)</label>
+  <input type="number" id="etiqueta" placeholder="Ex: 1.50" />
+
+  <label>Preset de Markup (sugestão rápida)</label>
+  <select id="presetMarkup" onchange="applyPreset()">
+    <option value="2.7">Básico (2.7x) – consumidor</option>
+    <option value="3.2">Premium (3.2x) – coleção especial</option>
+    <option value="1.8">Atacado (1.8x) – revenda</option>
+    <option value="custom">Custom</option>
+  </select>
+
+  <label>Markup custom (ex: 2.5)</label>
+  <input type="number" id="markupCustom" placeholder="Ex: 2.5" disabled />
+
+  <div class="inline-actions">
+    <button onclick="previewCalculo()">Pré-visualizar custo</button>
+    <button class="btn-ghost" onclick="limparCampos()">Limpar</button>
+  </div>
+
+  <div id="resultado" style="display:none;"></div>
+
+  <!-- BOTÃO VIVO INFODOSE (preview) -->
+  <button class="btn-info" onclick="gerarSugestaoInfodosePreview()">Gerar Sugestão Infodose</button>
+
+  <div id="infodoseSug"></div>
+
+  <button style="margin-top:10px;" onclick="salvarPeca()">Salvar peça no catálogo</button>
+</section>
+
+<!-- CATÁLOGO / PLANILHA -->
+<section class="card">
+  <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:8px;">Planilha automática (Catálogo de peças)</h2>
+
+  <div class="inline-actions no-print">
+    <button class="btn-ghost" onclick="exportCSV()">Exportar CSV/Planilha</button>
+    <button class="btn-ghost" onclick="exportPDF()">Exportar PDF</button>
+    <button class="btn-ghost" onclick="window.print()">Imprimir / Salvar PDF (nativo)</button>
+  </div>
+
+  <div class="table-wrap" id="tableWrap">
+    <table id="pecasTable">
+      <thead>
+        <tr>
+          <th>Peça</th>
+          <th>Material/peça</th>
+          <th>Custo total</th>
+          <th>Markup</th>
+          <th>Preço sugerido</th>
+          <th>Premium</th>
+          <th>Atacado</th>
+          <th>Infodose Live</th>
+          <th class="no-print">Ações</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<footer class="no-print">
+  Costa & Ribeiro × Infodose • Offline-First • Live Optional
+</footer>
+
+<script>
+/* ------------------------------
+   STATE + STORAGE
+------------------------------ */
+const LS_KEY = "cr_infodose_pecas_v2";
+const LS_THEME = "cr_infodose_theme_v1";
+const LS_AI = "cr_infodose_ai_v1";
+
+let pecas = loadPecas();
+
+function loadPecas(){
+  try{ return JSON.parse(localStorage.getItem(LS_KEY)) || []; }
+  catch(e){ return []; }
+}
+function savePecas(){
+  localStorage.setItem(LS_KEY, JSON.stringify(pecas));
+}
+
+/* ------------------------------
+   THEME
+------------------------------ */
+(function initTheme(){
+  const t = localStorage.getItem(LS_THEME) || "dark";
+  if(t==="light") document.body.classList.add("light");
+})();
+function toggleTheme(){
+  document.body.classList.toggle("light");
+  localStorage.setItem(LS_THEME, document.body.classList.contains("light") ? "light" : "dark");
+}
+
+/* ------------------------------
+   AI SETTINGS
+------------------------------ */
+function defaultEndpoint(provider){
+  if(provider==="openai") return "https://api.openai.com/v1/responses";
+  if(provider==="openrouter") return "https://openrouter.ai/api/v1/chat/completions";
+  return "";
+}
+
+function loadAISettings(){
+  try{
+    const s = JSON.parse(localStorage.getItem(LS_AI)) || {};
+    aiProvider.value = s.provider || "openai";
+    aiKey.value = s.key || "";
+    aiModel.value = s.model || "gpt-4.1-mini";
+    aiEndpoint.value = s.endpoint || defaultEndpoint(aiProvider.value);
+    setLiveStatus(s.key ? "ligado" : "desligado");
+  }catch(e){
+    aiEndpoint.value = defaultEndpoint("openai");
+    setLiveStatus("desligado");
+  }
+}
+loadAISettings();
+
+aiProvider.addEventListener("change",()=>{
+  if(!aiEndpoint.value || aiEndpoint.value.includes("openai") || aiEndpoint.value.includes("openrouter")){
+    aiEndpoint.value = defaultEndpoint(aiProvider.value);
+  }
+});
+
+function saveAISettings(){
+  const s = {
+    provider: aiProvider.value,
+    key: aiKey.value.trim(),
+    model: aiModel.value.trim() || "gpt-4.1-mini",
+    endpoint: aiEndpoint.value.trim() || defaultEndpoint(aiProvider.value)
+  };
+  localStorage.setItem(LS_AI, JSON.stringify(s));
+  setLiveStatus(s.key ? "ligado" : "desligado");
+}
+
+function setLiveStatus(v){
+  liveStatus.textContent = v;
+}
+
+/* Teste simples */
+async function testAI(){
+  saveAISettings();
+  const s = JSON.parse(localStorage.getItem(LS_AI));
+  if(!s.key){ alert("Coloque a chave de API primeiro."); return; }
+
+  try{
+    const out = await callInfodose({
+      nome:"Teste",
+      custoTotal:10,
+      materialPeca:5,
+      markup:2.7,
+      precoBase:27,
+      precoPremium:32,
+      precoAtacado:18
+    });
+    alert("Conexão OK ✅\n" + (out?.resumo || "Resposta recebida."));
+  }catch(err){
+    alert("Erro na conexão ❌\n" + err.message);
+  }
+}
+
+/* ------------------------------
+   PRESETS
+------------------------------ */
+function applyPreset(){
+  const v = presetMarkup.value;
+  if(v==="custom"){
+    markupCustom.disabled = false;
+    markupCustom.focus();
+  }else{
+    markupCustom.disabled = true;
+    markupCustom.value = "";
+  }
+}
+
+/* ------------------------------
+   CALC ENGINE
+------------------------------ */
+function getMarkupVal(){
+  if(presetMarkup.value==="custom"){
+    const m = parseFloat(markupCustom.value);
+    return isFinite(m) && m>0 ? m : 2.7;
+  }
+  return parseFloat(presetMarkup.value);
+}
+
+function calcFromFields(){
+  const data = {
+    nome: nomePeca.value.trim() || "Peça sem nome",
+    valorMetro: parseFloat(valorMetro.value)||0,
+    metrosPeca: parseFloat(qtdMetroPeca.value)||0,
+    aviamentos: parseFloat(aviamentos.value)||0,
+    costureira: parseFloat(costureira.value)||0,
+    frete: parseFloat(frete.value)||0,
+    embalagem: parseFloat(embalagem.value)||0,
+    extras: parseFloat(extras.value)||0,
+    etiqueta: parseFloat(etiqueta.value)||0,
+    markup: getMarkupVal()
+  };
+  return calcCosts(data);
+}
+
+function calcCosts(d){
+  const materialPeca = d.valorMetro * d.metrosPeca;
+  const custoTotal = materialPeca + d.aviamentos + d.costureira + d.frete + d.embalagem + d.extras + d.etiqueta;
+
+  return {
+    ...d,
+    materialPeca,
+    custoTotal,
+    precoBase: custoTotal * d.markup,
+    precoPremium: custoTotal * 3.2,
+    precoAtacado: custoTotal * 1.8,
+  };
+}
+
+function fmt(v){ return "R$ " + (v||0).toFixed(2); }
+
+/* ------------------------------
+   UI ACTIONS
+------------------------------ */
+function previewCalculo(){
+  const r = calcFromFields();
+  resultado.style.display = "block";
+  resultado.innerHTML = `
+    <div class="result-item">Material por peça: <span>${fmt(r.materialPeca)}</span></div>
+    <div class="result-item">Custo total/unidade: <span>${fmt(r.custoTotal)}</span></div>
+    <div class="result-item">Markup ativo: <span>${r.markup.toFixed(2)}x</span></div>
+    <hr style="margin:8px 0;border:0;border-bottom:1px solid var(--card-b)">
+    <div class="result-item">Sugestão (Base): <span>${fmt(r.precoBase)}</span></div>
+    <div class="result-item">Premium: <span>${fmt(r.precoPremium)}</span></div>
+    <div class="result-item">Atacado: <span>${fmt(r.precoAtacado)}</span></div>
+  `;
+  infodoseSug.style.display="none";
+}
+
+function limparCampos(){
+  ["nomePeca","valorMetro","qtdMetroPeca","aviamentos","costureira","frete","embalagem","extras","etiqueta","markupCustom"].forEach(id=>{
+    document.getElementById(id).value="";
+  });
+  presetMarkup.value="2.7";
+  applyPreset();
+  resultado.style.display="none";
+  infodoseSug.style.display="none";
+}
+
+function salvarPeca(){
+  const r = calcFromFields();
+  const id = "p_" + Date.now();
+  pecas.push({id, ...r, createdAt: new Date().toISOString(), infodose:null});
+  savePecas();
+  renderTabela();
+  limparCampos();
+}
+
+function removerPeca(id){
+  pecas = pecas.filter(p=>p.id!==id);
+  savePecas();
+  renderTabela();
+}
+
+function editarPeca(id){
+  const p = pecas.find(x=>x.id===id);
+  if(!p) return;
+  nomePeca.value = p.nome;
+  valorMetro.value = p.valorMetro;
+  qtdMetroPeca.value = p.metrosPeca;
+  aviamentos.value = p.aviamentos;
+  costureira.value = p.costureira;
+  frete.value = p.frete;
+  embalagem.value = p.embalagem;
+  extras.value = p.extras;
+  etiqueta.value = p.etiqueta;
+  presetMarkup.value = "custom";
+  applyPreset();
+  markupCustom.value = p.markup;
+  previewCalculo();
+  removerPeca(id);
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function renderTabela(){
+  const tb = document.querySelector("#pecasTable tbody");
+  tb.innerHTML = "";
+  pecas.forEach(p=>{
+    const sug = p.infodose?.resumo ? p.infodose.resumo : "—";
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${p.nome}</td>
+      <td>${fmt(p.materialPeca)}</td>
+      <td>${fmt(p.custoTotal)}</td>
+      <td>${p.markup.toFixed(2)}x</td>
+      <td><b>${fmt(p.precoBase)}</b></td>
+      <td>${fmt(p.precoPremium)}</td>
+      <td>${fmt(p.precoAtacado)}</td>
+      <td>
+        <div style="font-size:.88rem;line-height:1.2;">${sug}</div>
+        <button class="btn-info no-print" onclick="gerarSugestaoInfodosePeca('${p.id}')">Gerar Sugestão</button>
+      </td>
+      <td class="actions no-print">
+        <button onclick="editarPeca('${p.id}')">Editar</button>
+        <button class="btn-danger" onclick="removerPeca('${p.id}')">Del</button>
+      </td>
+    `;
+    tb.appendChild(tr);
+  });
+}
+renderTabela();
+
+/* ------------------------------
+   EXPORT CSV
+------------------------------ */
+function exportCSV(){
+  if(!pecas.length){ alert("Sem peças pra exportar."); return; }
+  const header = ["Peça","Material/peça","Custo total","Markup","Preço base","Premium","Atacado","Infodose resumo","Infodose markup ideal","Faixa psicológica"];
+  const rows = pecas.map(p=>[
+    p.nome,
+    p.materialPeca.toFixed(2),
+    p.custoTotal.toFixed(2),
+    p.markup.toFixed(2),
+    p.precoBase.toFixed(2),
+    p.precoPremium.toFixed(2),
+    p.precoAtacado.toFixed(2),
+    p.infodose?.resumo||"",
+    p.infodose?.markup_ideal||"",
+    p.infodose?.faixa_psicologica||""
+  ]);
+  const csv = [header, ...rows].map(r=>r.join(";")).join("\n");
+  const blob = new Blob([csv],{type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "costa-ribeiro-pecas.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ------------------------------
+   INFODOSE LIVE — CORE
+------------------------------ */
+
+/* prompt base (Infodose) */
+function buildInfodosePrompt(p){
+  return `
+Você é a Infodose Live da Costa & Ribeiro Ateliê.
+Analise os dados de custo e sugira preço ideal de venda.
+
+Responda em JSON PURO com as chaves:
+{
+ "markup_ideal": number,
+ "faixa_psicologica": "R$min–R$max",
+ "preco_sugerido": number,
+ "alertas": [string],
+ "posicionamento": string,
+ "comparacao_mercado": string,
+ "resumo": string
+}
+
+Dados:
+- peça: ${p.nome}
+- custo_total: ${p.custoTotal.toFixed(2)}
+- material_por_peça: ${p.materialPeca.toFixed(2)}
+- markup_atual: ${p.markup.toFixed(2)}
+- preco_base_atual: ${p.precoBase.toFixed(2)}
+- premium_atual: ${p.precoPremium.toFixed(2)}
+- atacado_atual: ${p.precoAtacado.toFixed(2)}
+
+Use contexto Brasil, ateliê, moda autoral, margem saudável.
+Sem texto fora do JSON.
+`.trim();
+}
+
+/* robust JSON extraction */
+function tryParseJSON(text){
+  if(!text) return null;
+  try{ return JSON.parse(text); }catch(e){}
+  // tenta encontrar bloco {...}
+  const m = text.match(/\{[\s\S]*\}/);
+  if(m){
+    try{ return JSON.parse(m[0]); }catch(e){}
+  }
+  return null;
+}
+
+async function callInfodose(p){
+  const s = JSON.parse(localStorage.getItem(LS_AI)||"{}");
+  if(!s.key) throw new Error("Sem API Key.");
+  const provider = s.provider || "openai";
+  const endpoint = s.endpoint || defaultEndpoint(provider);
+  const model = s.model || "gpt-4.1-mini";
+
+  const prompt = buildInfodosePrompt(p);
+
+  let body={}, headers={
+    "Authorization": `Bearer ${s.key}`,
+    "Content-Type": "application/json"
+  };
+
+  if(provider==="openai"){
+    // Responses API (recomendado p/ novos projetos)
+    body = {
+      model,
+      input: prompt,
+      max_output_tokens: 500
+    };
+  } else {
+    // OpenRouter / compat chat.completions
+    body = {
+      model,
+      messages: [
+        {role:"system", content:"Você é Infodose Live."},
+        {role:"user", content: prompt}
+      ],
+      temperature: 0.4
+    };
+    // OpenRouter pede header extra opcional; não obrigatório:
+    headers["HTTP-Referer"] = location.origin;
+    headers["X-Title"] = "Costa&Ribeiro Infodose Live";
+  }
+
+  const res = await fetch(endpoint, {method:"POST", headers, body: JSON.stringify(body)});
+  if(!res.ok){
+    const t = await res.text();
+    throw new Error(`HTTP ${res.status}: ${t.slice(0,200)}`);
+  }
+  const json = await res.json();
+
+  // Extrai texto dependendo do provider
+  let text = "";
+  if(provider==="openai"){
+    // Respostas podem vir em output[].content[].text
+    text =
+      json?.output?.[0]?.content?.map(c=>c.text).join("") ||
+      json?.output_text ||
+      "";
+  } else {
+    text = json?.choices?.[0]?.message?.content || "";
+  }
+
+  const data = tryParseJSON(text) || {resumo:text.slice(0,220)};
+  return data;
+}
+
+/* preview */
+async function gerarSugestaoInfodosePreview(){
+  saveAISettings();
+  const p = calcFromFields();
+  infodoseSug.style.display="block";
+  infodoseSug.innerHTML = `<div class="sug-title">Infodose pensando…</div>`;
+
+  try{
+    const sug = await callInfodose(p);
+    renderSugBox(sug, false);
+  }catch(e){
+    infodoseSug.innerHTML = `<div class="sug-title">Erro Infodose</div><div class="sug-line">${e.message}</div>`;
+  }
+}
+
+/* peça salva */
+async function gerarSugestaoInfodosePeca(id){
+  saveAISettings();
+  const idx = pecas.findIndex(x=>x.id===id);
+  if(idx<0) return;
+  const p = pecas[idx];
+
+  // feedback rápido UI
+  p.infodose = {resumo:"Infodose pensando…"};
+  savePecas(); renderTabela();
+
+  try{
+    const sug = await callInfodose(p);
+    pecas[idx].infodose = sug;
+    savePecas(); renderTabela();
+    // também mostra box no topo
+    renderSugBox(sug, true);
+    window.scrollTo({top:0,behavior:"smooth"});
+  }catch(e){
+    pecas[idx].infodose = {resumo:`Erro: ${e.message}`};
+    savePecas(); renderTabela();
+  }
+}
+
+function renderSugBox(sug, show){
+  if(show) infodoseSug.style.display="block";
+  infodoseSug.innerHTML = `
+    <div class="sug-title">Sugestão Infodose Live</div>
+    <div class="sug-line"><b>Markup ideal:</b> ${sug.markup_ideal ?? "—"}x</div>
+    <div class="sug-line"><b>Faixa psicológica:</b> ${sug.faixa_psicologica ?? "—"}</div>
+    <div class="sug-line"><b>Preço sugerido:</b> ${sug.preco_sugerido ? fmt(sug.preco_sugerido) : "—"}</div>
+    <div class="sug-line"><b>Posicionamento:</b> ${sug.posicionamento ?? "—"}</div>
+    <div class="sug-line"><b>Comparação mercado:</b> ${sug.comparacao_mercado ?? sug.comparacao_mercado ?? "—"}</div>
+    <div class="sug-line"><b>Alertas:</b> ${(sug.alertas||[]).join(" • ") || "—"}</div>
+    <hr style="margin:8px 0;border:0;border-bottom:1px solid var(--card-b)">
+    <div class="sug-line">${sug.resumo ?? ""}</div>
+  `;
+}
+
+/* ------------------------------
+   PWA INSTALL PROMPT
+------------------------------ */
+let deferredPrompt=null;
+window.addEventListener("beforeinstallprompt",(e)=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  installBtn.style.display="block";
+});
+installBtn?.addEventListener("click", async ()=>{
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt=null;
+  installBtn.style.display="none";
+});
+
+/* ------------------------------
+   SERVICE WORKER REG
+------------------------------ */
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("./sw.js");
+  });
+}
+</script>
+
+</body>
+</html>

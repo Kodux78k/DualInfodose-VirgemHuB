@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>DUAL • Ativação & Conexão (Monólito)</title>
+  <meta name="theme-color" content="#0b1220" />
+  <style>
+    /* MOBILE-FIRST VERTICAL HARD-LOCK */
+    :root{
+      /* Nebula Pro gradient 42° */
+      --grad-a:#ff00ff; /* #f0f */
+      --grad-b:#00ffff; /* #0ff */
+      --bg0:#070a11; --bg1:#0b1220; --bg2:#0e1a2e;
+      --text:#eaf1ff; --muted:#a8b4c8; --accent:#8af5ff;
+      --glass:rgba(255,255,255,0.06); --glass-bd:rgba(255,255,255,0.15);
+      --radius:18px; --shadow:0 10px 30px rgba(0,0,0,.45);
+      --ok:#2de3a0; --warn:#ffcf5a; --err:#ff6b6b;
+      --safe-bottom: env(safe-area-inset-bottom, 12px);
+    }
+    html,body{height:100%;background:radial-gradient(1200px 800px at 50% -10%,rgba(255,255,255,0.06),transparent 60%),linear-gradient(42deg,var(--grad-a),var(--grad-b));background-blend-mode:overlay,normal}
+    body{margin:0;color:var(--text);font:500 15px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;-webkit-font-smoothing:antialiased}
+
+    /* App shell */
+    #app{display:flex;flex-direction:column;min-height:100vh;background:linear-gradient(180deg,rgba(5,8,15,.75),rgba(5,8,15,.9)), radial-gradient(1000px 800px at 50% -10%, rgba(0,255,255,.08), transparent 60%);}    
+    header{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px;padding:14px 16px;background:linear-gradient(180deg,rgba(0,0,0,.45),rgba(0,0,0,0));backdrop-filter:blur(12px)}
+    header .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(42deg,var(--grad-a),var(--grad-b));box-shadow:0 0 0 2px rgba(255,255,255,.08) inset}
+    header h1{margin:0;font-size:16px;letter-spacing:.3px}
+
+    main{flex:1;display:flex;flex-direction:column;padding:16px;padding-bottom:110px;}
+
+    .screen{display:none;flex-direction:column;gap:14px}
+    .screen.active{display:flex}
+
+    .card{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.04));border:1px solid var(--glass-bd);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+    .title{font-size:22px;font-weight:800;letter-spacing:.2px}
+    .sub{color:var(--muted)}
+
+    .cta{display:block;width:100%;padding:14px 16px;border-radius:16px;border:0;color:#061018;font-weight:800;letter-spacing:.3px;background:linear-gradient(42deg,var(--grad-a),var(--grad-b));box-shadow:0 8px 20px rgba(0,255,255,.25),0 0 0 1px rgba(255,255,255,.12) inset}
+    .cta:active{transform:translateY(1px)}
+
+    .btn{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 14px;border-radius:14px;border:1px solid var(--glass-bd);background:var(--glass);color:var(--text)}
+    .btn:active{transform:translateY(1px)}
+
+    .opts{display:grid;grid-template-columns:1fr;gap:10px}
+    .chips{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{padding:8px 12px;border-radius:999px;border:1px solid var(--glass-bd);background:var(--glass);color:var(--text);font-weight:700}
+    .chip[data-active="1"]{background:linear-gradient(42deg,var(--grad-a),var(--grad-b));color:#041017;border-color:transparent}
+
+    .qrbox{display:flex;align-items:center;justify-content:center;gap:14px}
+    .qr{width:180px;height:180px;border-radius:16px;background:#0b1526;display:grid;place-items:center;border:1px solid var(--glass-bd);box-shadow:var(--shadow)}
+    .qr svg{width:150px;height:150px}
+
+    /* Toast Manager — bottom bar stack */
+    .bottombar{position:fixed;left:0;right:0;bottom:0;z-index:100;display:flex;flex-direction:column;gap:10px;padding:10px 12px calc(10px + var(--safe-bottom));pointer-events:none}
+    .toast{pointer-events:auto;margin:0 auto;max-width:680px;width:clamp(280px,94vw,680px);display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:16px;background:rgba(9,14,24,.86);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(12px);box-shadow:0 10px 22px rgba(0,0,0,.45);animation:slideUp .22s ease-out}
+    .toast .dot{width:10px;height:10px;border-radius:999px;background:var(--accent);box-shadow:0 0 10px var(--accent)}
+    .toast .txt{flex:1}
+    .toast .act{font-weight:800;color:#031015;background:linear-gradient(42deg,var(--grad-a),var(--grad-b));padding:8px 10px;border-radius:12px}
+    @keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+    /* Orb */
+    .orb{width:160px;height:160px;border-radius:999px;background:radial-gradient(circle at 40% 35%,rgba(255,255,255,.7),rgba(255,255,255,.25) 35%, rgba(10,20,30,.9) 36%, rgba(10,20,30,1) 70%);margin:16px auto;position:relative;box-shadow:inset 0 0 24px rgba(0,255,255,.2),0 10px 40px rgba(0,255,255,.2)}
+    .orb::after{content:"";position:absolute;left:50%;top:100%;transform:translate(-50%,-50%);width:200px;height:80px;border-radius:50%;background:radial-gradient(ellipse at center, rgba(0,255,255,.35), transparent 68%);filter:blur(8px)}
+
+    .holo{display:grid;gap:10px;margin:10px auto 6px auto;max-width:320px}
+    .holo .pill{display:flex;align-items:center;gap:8px;justify-content:center;background:rgba(0,255,255,.08);border:1px solid rgba(0,255,255,.25);padding:8px 10px;border-radius:999px;color:#9fefff;font-weight:800;text-transform:uppercase;letter-spacing:.25px}
+
+    /* Progress dots */
+    .steps{display:flex;gap:6px;justify-content:center;margin:6px 0 2px}
+    .steps span{width:8px;height:8px;border-radius:999px;background:rgba(255,255,255,.14)}
+    .steps span.on{background:linear-gradient(42deg,var(--grad-a),var(--grad-b))}
+
+    /* Accessibility helpers */
+    button{cursor:pointer}
+    .hide{display:none}
+  
+    /* KOBΦ Node */
+    .kobphi-wrap{display:grid;gap:12px}
+    .kobphi-orb{
+      position:relative;margin:8px auto;width:240px;height:240px;border-radius:999px;
+      background:radial-gradient(circle at 35% 30%, rgba(255,255,255,.65), rgba(255,255,255,.18) 36%, #0b1422 37%, #0b1422 70%);
+      box-shadow:inset 0 0 24px rgba(0,255,255,.22), 0 12px 50px rgba(0,255,255,.25);
+      animation:kobphiPulse 5s ease-in-out infinite;
+    }
+    .kobphi-orb::after{
+      content:"";position:absolute;left:50%;top:100%;transform:translate(-50%,-50%);
+      width:260px;height:90px;border-radius:50%;background:radial-gradient(ellipse at center, rgba(0,255,255,.35), transparent 70%);filter:blur(8px)
+    }
+    @keyframes kobphiPulse{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
+    .kobphi-label{position:absolute;text-shadow:0 0 10px rgba(0,255,255,.35)}
+    .kobphi-label.top{top:-48px;width:100%;text-align:center;color:#ffbf3f;font-weight:800}
+    .kobphi-label.bottom{bottom:-42px;width:100%;text-align:center;color:#ffd773}
+    .kobphi-label.left{left:-110px;top:50%;transform:translateY(-50%) rotate(-90deg);color:#67e5ff}
+    .kobphi-label.right{right:-120px;top:50%;transform:translateY(-50%) rotate(90deg);color:#ff7fb1}
+    .kobphi-line{position:absolute;left:50%;top:50%;width:140px;height:2px;background:linear-gradient(90deg,#ff52e5,#00c5ff);opacity:.45;transform-origin:center}
+    .kobphi-line.l1{transform:translate(-50%,-120px)}
+    .kobphi-line.l2{transform:translate(-50%,-50%) rotate(60deg)}
+    .kobphi-line.l3{transform:translate(-50%,-50%) rotate(-60deg)}
+    .kobphi-console{min-height:68px;max-height:120px;overflow:auto;border:1px solid var(--glass-bd);background:rgba(255,255,255,.04);border-radius:14px;padding:10px;font-family:ui-monospace, SFMono-Regular, Menlo, monospace;}
+</style>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <div class="logo" aria-hidden="true"></div>
+      <h1>DUAL — Ativação & Conexão</h1>
+    </header>
+
+    <main>
+      <!-- steps indicator -->
+      <div class="steps" id="steps"></div>
+
+      <!-- Screen 1: Welcome -->
+      <section class="screen active" id="s1" aria-label="Bem-vindo">
+        <div class="card">
+          <div class="title">Bem-vindo ao seu DUAL</div>
+          <p class="sub">Seu núcleo vibra com você. Vamos ativar?</p>
+          <div class="orb" aria-hidden="true"></div>
+          <div class="holo">
+            <div class="pill">Pulso Simbiótico</div>
+            <div class="pill">Trilha • Adaptativa</div>
+          </div>
+          <button class="cta" data-next>Ativar agora</button>
+          <div class="opts">
+            <button class="btn" data-next>Entrar</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screen 2: Login -->
+      <section class="screen" id="s2" aria-label="Autenticação">
+        <div class="card">
+          <div class="title">Entrar ou criar conta</div>
+          <p class="sub">Usamos seus dados só para sincronizar o DUAL entre app e web.</p>
+          <div class="opts">
+            <button class="btn" data-next>Entrar com WhatsApp</button>
+            <button class="btn" data-next>Entrar com E‑mail mágico</button>
+            <button class="btn" data-next>Apple / Google</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screen 3: Permissions -->
+      <section class="screen" id="s3" aria-label="Permissões">
+        <div class="card">
+          <div class="title">Permissões rápidas</div>
+          <p class="sub">Você pode mudar isso depois no Painel DUAL.</p>
+          <div class="opts">
+            <button class="btn perm" data-perm="notify">Ativar notificações (toasts de pulso)</button>
+            <button class="btn perm" data-perm="mic">Microfone para detectar ambiente (opcional)</button>
+            <button class="btn perm" data-perm="net">Bluetooth/Wi‑Fi local para achar a Esfera (opcional)</button>
+          </div>
+          <button class="cta" data-next>Continuar</button>
+        </div>
+      </section>
+
+      <!-- Screen 4: Link Web via QR -->
+      <section class="screen" id="s4" aria-label="Vincular Web">
+        <div class="card">
+          <div class="title">Vincular com a Web</div>
+          <p class="sub">Abra <strong>dual.infodose.com</strong> e aponte a câmera para o QR abaixo.</p>
+          <div class="qrbox">
+            <div class="qr" id="qr" aria-label="Código QR dinâmico"></div>
+          </div>
+          <div class="opts">
+            <button class="btn" id="fakeScan">Simular leitura do QR</button>
+            <button class="btn" data-next>Receber link mágico</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Screen 5: Pair Sphere -->
+      <section class="screen" id="s5" aria-label="Parear Esfera">
+        <div class="card">
+          <div class="title">Conectar à sua Esfera</div>
+          <p class="sub" id="pairSub">Procurando dispositivos na rede…</p>
+          <div class="holo" id="foundList"></div>
+          <div class="opts">
+            <button class="btn" id="insertCode">Inserir código (6 dígitos)</button>
+          </div>
+          <button class="cta" data-next id="pairNext" disabled>Conectar</button>
+        </div>
+      </section>
+
+      <!-- Screen 6: State & Archetypes -->
+      <section class="screen" id="s6" aria-label="Estado & Arquétipos">
+        <div class="card">
+          <div class="title">Seu pulso agora</div>
+          <div class="chips" id="states"></div>
+          <p class="sub">Arquétipos ativos</p>
+          <div class="chips" id="archs"></div>
+          <button class="cta" data-next>Sincronizar com a casa</button>
+        </div>
+      </section>
+
+      <!-- Screen 7: Done -->
+      <section class="screen" id="s7" aria-label="Pronto">
+        <div class="card">
+          <div class="title">DUAL ativo ✦</div>
+          <p class="sub">A trilha e os hologramas seguem seu pulso. Convide quem você ama.</p>
+          <div class="opts">
+            <button class="btn" id="openWeb">Abrir Web</button>
+            <button class="btn" id="invite">Convidar família</button>
+            <button class="btn" id="routines">Configurar rotinas</button>
+          </div>
+        </div>
+      </section>
+
+          
+      <!-- Screen 8: KOBΦ Node -->
+      <section class="screen" id="s8" aria-label="KOBΦ Node">
+        <div class="card">
+          <div class="title">KOBΦ-NODE • MYKERNEL</div>
+          <p class="sub">Ative o nó do seu núcleo: pulso ↔ ação ↔ sinapse (rede expandida).</p>
+
+          <div class="kobphi-wrap">
+            <div class="kobphi-orb" aria-hidden="true">
+              <div class="kobphi-label top">Verdade da Fusão</div>
+              <div class="kobphi-label left">𝒜 — Ação</div>
+              <div class="kobphi-label right">Sinapse — Unouno</div>
+              <div class="kobphi-label bottom">Retorno ∞</div>
+              <span class="kobphi-line l1"></span>
+              <span class="kobphi-line l2"></span>
+              <span class="kobphi-line l3"></span>
+            </div>
+            <div class="kobphi-console" id="kobphiLog" role="log" aria-live="polite"></div>
+          </div>
+
+          <div class="opts">
+            <button class="btn" id="btnActivateKernel">Ativar MYKERNEL</button>
+            <button class="btn" id="btnExpandNet">Expandir Rede (KOBΦ)</button>
+            <button class="btn" id="btnEmitPulse">Emitir Pulso</button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Toast Stack -->
+    <div class="bottombar" id="toasts" aria-live="polite" aria-atomic="true"></div>
+  </div>
+
+  <script>
+  /* State machine + utilities */
+  const el = (q,root=document)=>root.querySelector(q);
+  const els = (q,root=document)=>[...root.querySelectorAll(q)];
+  const screens = els('.screen');
+  let step = 1; const total = screens.length;
+
+  const lsk = {
+    session:'dual.session', device:'dual.device', state:'dual.state',
+    arch:'dual.arch', next:'dual.next', presence:'dual.presence'
+  };
+  const store = {
+    set(k,v){localStorage.setItem(k, JSON.stringify(v));},
+    get(k){try{return JSON.parse(localStorage.getItem(k));}catch{ return null;}}
+  };
+
+  function setStep(n){
+    step = Math.max(1, Math.min(total, n));
+    screens.forEach((s,i)=>s.classList.toggle('active', i===step-1));
+    // progress dots
+    const dots = Array.from({length: total}, (_,i)=>`<span class="${i===step-1?'on':''}"></span>`).join('');
+    el('#steps').innerHTML = dots;
+    window.scrollTo({top:0, behavior:'instant'});
+  }
+
+  // Toasts
+  function toast(txt, {action, onAction, kind}={}){
+    const bar = el('#toasts');
+    const t = document.createElement('div'); t.className='toast';
+    const dot = document.createElement('div'); dot.className='dot'; if(kind==='ok') dot.style.background='var(--ok)'; if(kind==='warn') dot.style.background='var(--warn)'; if(kind==='err') dot.style.background='var(--err)';
+    const p = document.createElement('div'); p.className='txt'; p.innerHTML = txt;
+    t.append(dot,p);
+    if(action){ const a=document.createElement('button'); a.className='act'; a.textContent=action; a.onclick=()=>{onAction?.(); t.remove();}; t.append(a); }
+    bar.append(t);
+    setTimeout(()=>t.remove(), 5200);
+  }
+
+  /* Fake QR generator (simple SVG pattern) */
+  function drawQR(){
+    const box = el('#qr');
+    const seed = Math.random().toString(36).slice(2, 10);
+    const rng = (s)=>{ let h=0; for(let i=0;i<s.length;i++) h=(h*31 + s.charCodeAt(i))>>>0; return ()=> (h = (1103515245*h+12345)>>>0) & 1; };
+    const bit = rng(seed);
+    const size=21, cell=6, pad=6;
+    const w = size*cell + pad*2; const h=w;
+    const svg = [`<svg viewBox='0 0 ${w} ${h}' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='QR'>`];
+    svg.push(`<rect width='100%' height='100%' rx='8' fill='#08111e'/>`);
+    for(let y=0;y<size;y++){
+      for(let x=0;x<size;x++){
+        const on = (x<5&&y<5)||(x>size-6&&y<5)||(x<5&&y>size-6) ? 1 : bit();
+        if(on) svg.push(`<rect x='${pad+x*cell}' y='${pad+y*cell}' width='${cell}' height='${cell}' fill='#9fefff'/>`);
+      }
+    }
+    svg.push('</svg>');
+    box.innerHTML = svg.join('');
+    store.set(lsk.session, {qrSeed:seed, ts:Date.now()});
+  }
+
+  // Populate choices
+  const STATES = ['Calmo','Festa','Família','Foco'];
+  const ARCHS = ['Atlas','Nova','Serena','Kaos','Lumine','Aion'];
+  function renderChoices(){
+    const S = el('#states'); S.innerHTML='';
+    STATES.forEach(name=>{ const b=document.createElement('button'); b.className='chip'; b.textContent=name; b.onclick=()=>{
+      els('#states .chip').forEach(c=>c.dataset.active='0'); b.dataset.active='1'; store.set(lsk.state, name); toast(`Estado definido: <b>${name}</b>`, {kind:'ok'});}; S.append(b); });
+    const A = el('#archs'); A.innerHTML='';
+    ARCHS.forEach(name=>{ const c=document.createElement('button'); c.className='chip'; c.textContent=name; c.onclick=()=>{
+      c.dataset.active = c.dataset.active==='1' ? '0':'1'; const act = els('#archs .chip').filter(x=>x.dataset.active==='1').map(x=>x.textContent); store.set(lsk.arch, act); toast(`Arquétipos: <b>${act.join(', ')||'nenhum'}</b>`, {kind:'ok'});}; A.append(c); });
+  }
+
+  // Fake network discovery
+  function discover(){
+    el('#pairSub').textContent='Procurando dispositivos na rede…';
+    const list = el('#foundList'); list.innerHTML=''; el('#pairNext').disabled = true;
+    setTimeout(()=>{
+      const id = 'DUAL-' + Math.random().toString(36).slice(2,6).toUpperCase();
+      const item = document.createElement('div'); item.className='pill'; item.textContent = id + ' • pronto';
+      list.append(item); el('#pairSub').textContent='Dispositivo encontrado'; el('#pairNext').disabled=false;
+      store.set(lsk.device, id);
+      toast(`Esfera detectada: <b>${id}</b>`, {kind:'ok'});
+    }, 1400);
+  }
+
+  function nextPhaseSuggestion(){
+    const nx = {label:'Alegria', evidence:'bpm +8, 3 convidados votaram Nova/Serena'};
+    store.set(lsk.next, nx);
+    toast(`Próxima fase sugerida: <b>${nx.label}</b> — ${nx.evidence}`, {action:'Aplicar', onAction:()=>toast('Fase aplicada ✓',{kind:'ok'})});
+  }
+
+  // Wire navigation
+  els('[data-next]').forEach(b=> b.addEventListener('click', ()=> setStep(step+1)) );
+
+  // Permissions simulation
+  els('.perm').forEach(btn=> btn.addEventListener('click', ()=>{
+    const k = btn.dataset.perm; btn.classList.add('hide');
+    toast(`Permissão “${k}” ativada`, {kind:'ok'});
+  }));
+
+  // Fake scan + discovery
+  el('#fakeScan').addEventListener('click', ()=>{
+    toast('QR lido • sessão vinculada na Web',{kind:'ok'});
+    setTimeout(()=> setStep(5), 500);
+  });
+
+  el('#pairNext').addEventListener('click', ()=>{
+    toast('Conectado à Esfera • Pulso sincronizado',{kind:'ok'});
+    setTimeout(()=> setStep(6), 400);
+  });
+
+  el('#insertCode').addEventListener('click', ()=>{
+    const code = prompt('Digite o código de 6 dígitos da base:','381204');
+    if(code){ toast('Código aceito • Esfera pareada',{kind:'ok'}); el('#pairNext').disabled=false; }
+  });
+
+  // Final actions
+  el('#openWeb').addEventListener('click', ()=> toast('Abrindo dual.infodose.com… (simulado)') );
+  el('#invite').addEventListener('click', ()=> toast('Convite criado: dual.infodose.com/invite/ABCD') );
+  el('#routines').addEventListener('click', ()=> toast('Rotina “Modo Churrasco” salva • luz 2700K + groove 🇧🇷',{kind:'ok'}) );
+
+  // Boot
+  setStep(1); drawQR(); renderChoices();
+  // Auto events per step
+  const stepObserver = new MutationObserver(()=>{
+    if(step===5) discover();
+    if(step===6) setTimeout(nextPhaseSuggestion, 900);
+    if(step===7){
+      const pres = ['Raphael','Pai','Amigos']; store.set(lsk.presence, pres);
+      toast('Reconhecemos 3 celulares • Serena + Nova ativos',{kind:'ok'});
+    }
+  });
+  stepObserver.observe(el('#steps'), {childList:true});
+
+  // Welcome toasts
+  setTimeout(()=> toast('Bem-vindo • Ative seu DUAL', {action:'Começar', onAction:()=>setStep(2)}), 600);
+  
+  /* ====== KOBΦ-NODE.ACTIVATE — MYKERNEL BUS ====== */
+  (function(){
+    const $ = (q,r=document)=>r.querySelector(q);
+    const log = (t)=>{ const box=$('#kobphiLog'); if(!box) return; const p=document.createElement('div'); p.innerHTML=t; box.append(p); box.scrollTop=box.scrollHeight; };
+    class KernelBus extends EventTarget{ emit(type,detail){ this.dispatchEvent(new CustomEvent(type,{detail})); } on(type,fn){ this.addEventListener(type,fn); return ()=>this.removeEventListener(type,fn);} }
+    const MYKERNEL = {
+      bus:new KernelBus(), state:{active:false, net:false, pulses:0, arch:[], mode:''},
+      activate(){ if(this.state.active) return; this.state.active=true; this.bus.emit('kernel:activate',{ts:Date.now()}); log('⟡ MYKERNEL ativado'); toast('KOBΦ Node • MYKERNEL ativo',{kind:'ok'}); this.bindToOnboarding(); },
+      expand(){ if(!this.state.active){ log('⚠️ ative o kernel antes'); toast('Ative o kernel primeiro',{kind:'warn'}); return; } this.state.net=true; this.bus.emit('net:expand',{truth:true,action:true,synapse:true}); log('⇱ Rede expandida: Verdade ◇ 𝒜 ◇ Sinapse'); toast('Rede expandida • hologramas prontos',{kind:'ok'}); },
+      pulse(payload={}){ if(!this.state.active) return; this.state.pulses++; const evt={n:this.state.pulses,payload,ts:Date.now()}; this.bus.emit('pulse',evt); log(`✦ Pulso #${evt.n} • ${payload.note||'auto'}`); },
+      bindToOnboarding(){ const s = store.get('dual.state'); const a = store.get('dual.arch')||[]; this.state.mode=s||'Calmo'; this.state.arch=a; this.bus.emit('kernel:sync',{mode:this.state.mode, arch:this.state.arch}); log(`⟲ Sync: modo <b>${this.state.mode}</b> • arqs [${this.state.arch.join(', ')}]`); }
+    };
+    window.MYKERNEL = MYKERNEL;
+    const btnAct = document.getElementById('btnActivateKernel');
+    const btnNet = document.getElementById('btnExpandNet');
+    const btnPulse = document.getElementById('btnEmitPulse');
+    btnAct?.addEventListener('click', ()=> MYKERNEL.activate());
+    btnNet?.addEventListener('click', ()=> MYKERNEL.expand());
+    btnPulse?.addEventListener('click', ()=> MYKERNEL.pulse({note:'simbiotico'}));
+
+    MYKERNEL.bus.addEventListener('pulse', ()=>{
+      const orb = document.querySelector('.kobphi-orb');
+      orb?.animate([{filter:'brightness(1.0)'},{filter:'brightness(1.5)'},{filter:'brightness(1.0)'}],{duration:420,easing:'ease-out'});
+    });
+
+    const _ob2 = new MutationObserver(()=>{ if(step===7){ toast('KOBΦ Node disponível — abrir?', {action:'Abrir', onAction:()=>setStep(8)}); _ob2.disconnect(); } });
+    _ob2.observe(document.getElementById('steps'), {childList:true});
+  })();
+</script>
+</body>
+</html>

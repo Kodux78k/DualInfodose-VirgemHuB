@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Nos.S°lar — Micro Widget</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Fonte básica -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+<style>
+/* MOBILE-FIRST VERTICAL HARD-LOCK — MICRO WIDGET */
+
+:root {
+  --bg-day: radial-gradient(circle at 20% 10%, #fff9c4 0%, #ffe082 35%, #ffb74d 70%, #ff9800 100%);
+  --bg-sunset: radial-gradient(circle at 10% 0%, #ffd180 0%, #ff8a65 30%, #f06292 60%, #7e57c2 100%);
+  --bg-night: radial-gradient(circle at 20% 0%, #020617 0%, #020617 40%, #000000 100%);
+
+  --panel: rgba(15, 23, 42, 0.96);
+  --ink: #eafcff;
+  --muted: #9fb3cc;
+  --accent: #7dd3fc;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-day);
+  color: var(--ink);
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+/* Container micro-widget */
+.nossolar-widget {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 10px 10px 16px;
+}
+
+/* Card único */
+.nv-card {
+  background: var(--panel);
+  border-radius: 14px;
+  padding: 10px 12px 12px;
+  box-shadow:
+    0 16px 32px rgba(0,0,0,0.6),
+    0 0 0 1px rgba(148,163,184,0.22);
+}
+
+/* Header compacto */
+.nv-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.nv-tag {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(250, 250, 210, 0.7);
+  background: rgba(15, 23, 42, 0.9);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nv-tag span {
+  opacity: 0.9;
+}
+
+.nv-time {
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
+/* Título / subtítulo */
+.nv-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.nv-sub {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* Linha de modo */
+.nv-mode-line {
+  margin-top: 6px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+}
+
+/* Botões compactos */
+.nv-btn-row {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.nv-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.76rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,255,255,0.1);
+  color: var(--ink);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  flex: 1 1 auto;
+  justify-content: center;
+}
+
+.nv-btn:active {
+  transform: scale(0.97);
+}
+
+/* Dica rápida */
+.nv-tip-block {
+  margin-top: 10px;
+  padding: 8px 9px;
+  border-radius: 10px;
+  background: rgba(15,23,42,0.96);
+  border: 1px solid rgba(148,163,184,0.55);
+  font-size: 0.78rem;
+}
+
+.nv-tip-block strong {
+  display: block;
+  margin-bottom: 2px;
+}
+
+/* Linha geo */
+.nv-geo {
+  margin-top: 6px;
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+
+/* Wave visual minimal */
+.nv-wave {
+  position: relative;
+  margin-top: 8px;
+  height: 24px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: radial-gradient(circle at 0 50%, rgba(125,211,252,0.24), rgba(15,23,42,0.9));
+}
+
+.nv-wave-inner {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to right,
+    rgba(125,211,252,0.1) 0,
+    rgba(125,211,252,0.9) 2px,
+    transparent 4px
+  );
+  opacity: 0.8;
+  transform-origin: left center;
+  animation: nv-wave-move 2.6s linear infinite;
+}
+
+.nv-wave-inner.off {
+  opacity: 0.18;
+  filter: blur(0.5px);
+}
+
+/* Toastzinho embutido */
+.nv-toast {
+  margin-top: 6px;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+/* Animações */
+@keyframes nv-wave-move {
+  0% { transform: translateX(0) skewX(-10deg); }
+  100% { transform: translateX(-40px) skewX(-10deg); }
+}
+
+/* Modos de fundo pelo body (para usar em iframe separado) */
+body.mode-day {
+  background: var(--bg-day);
+}
+body.mode-sunset {
+  background: var(--bg-sunset);
+}
+body.mode-night {
+  background: var(--bg-night);
+}
+</style>
+</head>
+<body class="mode-day">
+<div class="nossolar-widget" id="nossolarWidget">
+  <div class="nv-card">
+    <div class="nv-header-top">
+      <div class="nv-tag">
+        ☀️ <span>Nos.S°lar</span>
+      </div>
+      <div class="nv-time" id="nvTime">--:--</div>
+    </div>
+    <div>
+      <div class="nv-title">Micro-Widget · Estado Solar</div>
+      <div class="nv-sub">Modo, geo, binaural & dica rápida · 3·6·9</div>
+    </div>
+
+    <div class="nv-mode-line" id="nvModeLabel">
+      MODO: DIA · CAPTAÇÃO & CARREGAMENTO
+    </div>
+
+    <div class="nv-btn-row">
+      <button class="nv-btn" onclick="nvSyncSolar(event)">🔄 Sync</button>
+      <button class="nv-btn" onclick="nvToggleBinaural(event)">🔊 Binaural</button>
+      <button class="nv-btn" onclick="nvPlayArpeggio(event)">🎼 Arpejo</button>
+    </div>
+
+    <div class="nv-tip-block" id="nvTipBlock">
+      <strong>Dica rápida</strong>
+      <span>Toque em <b>Sync</b> para alinhar o widget com o seu horário, modo solar e posição simbólica.</span>
+    </div>
+
+    <div class="nv-geo" id="nvGeo">
+      GEO: aguardando leitura...
+    </div>
+
+    <div class="nv-wave">
+      <div class="nv-wave-inner off" id="nvWaveInner"></div>
+    </div>
+
+    <div class="nv-toast" id="nvToast">
+      Binaural: desligado · Arpejo: pronto.
+    </div>
+  </div>
+</div>
+
+<script>
+/* Estado básico */
+let geoLat = null;
+let geoLng = null;
+let audioCtx = null;
+let osc1 = null;
+let osc2 = null;
+let ondasAtivas = false;
+let estacaoSolar = 'DIA';
+
+/* Utils DOM */
+function $(id) { return document.getElementById(id); }
+
+/* Atualiza relógio */
+function nvUpdateTime() {
+  const t = new Date();
+  const hh = String(t.getHours()).padStart(2,'0');
+  const mm = String(t.getMinutes()).padStart(2,'0');
+  const el = $('nvTime');
+  if (el) el.textContent = hh + ':' + mm;
+}
+setInterval(nvUpdateTime, 30000);
+nvUpdateTime();
+
+/* Auto-tema simples */
+function nvAutoTheme() {
+  const h = new Date().getHours();
+  if (h >= 19 || h < 6) {
+    document.body.classList.remove('mode-day','mode-sunset');
+    document.body.classList.add('mode-night');
+    estacaoSolar = 'NOITE';
+    const ml = $('nvModeLabel');
+    if (ml) ml.textContent = 'MODO: NOITE · REDE DE DADOS';
+  } else if (h >= 16) {
+    document.body.classList.remove('mode-day','mode-night');
+    document.body.classList.add('mode-sunset');
+    estacaoSolar = 'PÔR DO SOL';
+    const ml = $('nvModeLabel');
+    if (ml) ml.textContent = 'MODO: PÔR DO SOL · TRANSIÇÃO';
+  } else {
+    document.body.classList.remove('mode-sunset','mode-night');
+    document.body.classList.add('mode-day');
+    estacaoSolar = 'DIA';
+    const ml = $('nvModeLabel');
+    if (ml) ml.textContent = 'MODO: DIA · CAPTAÇÃO & CARREGAMENTO';
+  }
+}
+nvAutoTheme();
+
+/* Geo básica */
+function nvReadGeo() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) return resolve(false);
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      geoLat = pos.coords.latitude;
+      geoLng = pos.coords.longitude;
+      resolve(true);
+    }, function() {
+      resolve(false);
+    }, { timeout: 6000, maximumAge: 60000 });
+  });
+}
+
+/* Audio ctx */
+function nvEnsureAudioCtx() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    return audioCtx.resume();
+  }
+  return Promise.resolve();
+}
+
+/* Toast interno */
+function nvSetToast(msg) {
+  const el = $('nvToast');
+  if (!el) return;
+  el.textContent = msg;
+}
+
+/* Wave visual */
+function nvSetWave(stateOn) {
+  const el = $('nvWaveInner');
+  if (!el) return;
+  if (stateOn) {
+    el.classList.remove('off');
+  } else {
+    el.classList.add('off');
+  }
+}
+
+/* Sync solar: horário + tema + geo + dica */
+async function nvSyncSolar(ev) {
+  ev.stopPropagation();
+  nvUpdateTime();
+  nvAutoTheme();
+
+  const okGeo = await nvReadGeo();
+  const geoEl = $('nvGeo');
+  const tip = $('nvTipBlock');
+
+  let latTxt = geoLat != null ? geoLat.toFixed(2) : 'lat?';
+  let lngTxt = geoLng != null ? geoLng.toFixed(2) : 'lng?';
+
+  if (geoEl) {
+    geoEl.textContent = okGeo
+      ? 'GEO: ' + latTxt + ' / ' + lngTxt + ' · ponto ativo na malha solar.'
+      : 'GEO: não foi possível ler a posição, mas o ritual continua.';
+  }
+
+  const h = new Date().getHours();
+  let dica;
+  if (h < 12) {
+    dica = 'Manhã: alongar pescoço e ombros por 3 minutos, respirando pela janela, ' +
+           'como se você fosse um painel abrindo para o sol.';
+  } else if (h < 18) {
+    dica = 'Tarde: escolha uma tarefa importante e faça em bloco de 25 minutos, ' +
+           'com o celular parado — como um inversor focado em um único circuito.';
+  } else {
+    dica = 'Noite: diminua a luz e escreva em 3 linhas o que o dia “carregou” em você. ' +
+           'Desligue mentalmente os circuitos que não precisam ficar em standby.';
+  }
+
+  if (tip) {
+    tip.innerHTML = '<strong>Dica rápida</strong><span>' + dica + '</span>';
+  }
+
+  nvSetToast('Widget sincronizado com horário e modo solar.');
+}
+
+/* Binaural ON/OFF */
+async function nvToggleBinaural(ev) {
+  ev.stopPropagation();
+  await nvEnsureAudioCtx();
+
+  const geoEl = $('nvGeo');
+
+  if (!ondasAtivas) {
+    let baseLat = geoLat != null ? Math.abs(geoLat) : 23.5;
+    let baseLng = geoLng != null ? Math.abs(geoLng) : 47.5;
+
+    let base = 190 + (baseLat % 20);
+    let diff = 8 + (baseLng % 4);
+
+    let freq1 = base - diff / 2;
+    let freq2 = base + diff / 2;
+
+    osc1 = audioCtx.createOscillator();
+    osc2 = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+
+    osc1.type = 'sine';
+    osc2.type = 'sine';
+    osc1.frequency.value = freq1;
+    osc2.frequency.value = freq2;
+    g.gain.value = 0.06;
+
+    osc1.connect(g);
+    osc2.connect(g);
+    g.connect(audioCtx.destination);
+
+    osc1.start();
+    osc2.start();
+
+    ondasAtivas = true;
+    nvSetWave(true);
+    nvSetToast('Binaural ligado (' + freq1.toFixed(1) + ' / ' + freq2.toFixed(1) + ' Hz).');
+    if (geoEl) geoEl.textContent += ' · binaural ativo.';
+  } else {
+    if (osc1) osc1.stop();
+    if (osc2) osc2.stop();
+    osc1 = null;
+    osc2 = null;
+    ondasAtivas = false;
+    nvSetWave(false);
+    nvSetToast('Binaural desligado.');
+  }
+}
+
+/* Arpejo baseado na latitude + estação */
+function nvPlayArpeggio(ev) {
+  ev.stopPropagation();
+  nvEnsureAudioCtx().then(() => {
+    const ctx = audioCtx;
+    const baseLat = geoLat != null ? Math.abs(geoLat) : 23.5;
+    const base = 220 + (baseLat % 40);
+    const dur = 0.16;
+
+    let escala;
+    if (estacaoSolar === 'NOITE') {
+      escala = [0, 3, 7, 10, 15];
+    } else if (estacaoSolar === 'PÔR DO SOL') {
+      escala = [0, 2, 5, 9, 12];
+    } else {
+      escala = [0, 4, 7, 11, 14];
+    }
+
+    const now = ctx.currentTime;
+    escala.forEach((st, i) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      const freq = base * Math.pow(2, st / 12);
+
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(freq, now + i * dur);
+      g.gain.setValueAtTime(0.001, now + i * dur);
+      g.gain.linearRampToValueAtTime(0.12, now + i * dur + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + i * dur + dur);
+
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.start(now + i * dur);
+      o.stop(now + i * dur + dur);
+    });
+
+    nvSetToast('Arpejo gerado com base na sua latitude & estação: ' + estacaoSolar + '.');
+  });
+}
+</script>
+</body>
+</html>

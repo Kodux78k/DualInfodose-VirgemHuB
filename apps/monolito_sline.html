@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Monólito S‑Line • Conlux KOBLLUX</title>
+<meta name="theme-color" content="#00c2ff"/>
+<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Infodose%20S-Line%22%2C%22short_name%22%3A%22S-Line%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23070b12%22%2C%22theme_color%22%3A%22%2300c2ff%22%7D">
+<style>
+  /* MOBILE-FIRST VERTICAL HARD-LOCK — Monólito S-Line */
+  :root{
+    --bg0:#05060a; --bg1:#0b0f1a; --text:#eaf1ff; --muted:#9fb3c8;
+    --arch-overlay: rgba(0,0,0,0);
+    --radius:16px;
+    --brandA:#00c5ff; --brandB:#ff52e5;
+    --ring:#00d9ff; --glow:rgba(0,197,255,.45);
+  }
+  [data-theme="nebula"]{ --bg0:#0b0b12; --bg1:#090914; }
+  [data-theme="luxara"]{ --bg0:#0a0a0f; --bg1:#070710; }
+  [data-theme="blue1"]{ --bg0:#061018; --bg1:#07121c; }
+  [data-theme="flare"] { --bg0:#130a0b; --bg1:#1a0c10; }
+  [data-theme="aqua"]  { --bg0:#071016; --bg1:#06141b; }
+  [data-theme="sonar"] { --bg0:#061213; --bg1:#041012; }
+
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    margin:0;color:var(--text);
+    background:
+      radial-gradient(1200px 800px at 70% -10%, rgba(0,197,255,.07), transparent),
+      radial-gradient(900px 600px at 10% 120%, rgba(255,82,229,.07), transparent),
+      linear-gradient(180deg,var(--bg0),var(--bg1));
+    font:500 15px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto;
+    -webkit-font-smoothing:antialiased;
+  }
+  header{position:sticky;top:0;z-index:10;padding:10px 12px;margin-bottom:10px;
+    background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,0));backdrop-filter:blur(6px)}
+  .hstack{display:flex;align-items:center;gap:10px}
+  .spacer{flex:1}
+  .chip{border-radius:9999px;padding:8px 12px; font-size:12px; background:rgba(255,255,255,.06)}
+  .btn{border:0;border-radius:12px;padding:10px 12px;color:#fff;background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.04))}
+  .btn:active{transform:scale(.98)}
+
+  #app{padding:14px}
+  .panel{margin-top:12px;border-radius:var(--radius);padding:12px;background:rgba(255,255,255,.04)}
+  .bar{display:flex;gap:8px;flex-wrap:wrap}
+  .abtn{flex:1 1 calc(50% - 8px);min-width:146px;border:0;border-radius:var(--radius);padding:12px 12px;display:flex;align-items:center;gap:10px;
+       background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,.02));
+       box-shadow:0 6px 18px rgba(0,0,0,.25);color:#fff}
+  .abtn:active{transform:scale(.98)}
+  .abtn svg{width:32px;height:32px;border-radius:10px;flex:0 0 auto;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+
+  #log{max-height:32vh;overflow:auto}
+  .log{opacity:.95;font:500 12px/1.4 ui-monospace,Menlo,Consolas;padding:6px 0;border-bottom:1px dashed rgba(255,255,255,.06)}
+
+  .overlay::before{content:"";position:fixed;inset:0;pointer-events:none;background:var(--arch-overlay);mix-blend-mode:screen;transition:.25s}
+
+  /* S-Machine Line */
+  .sline{height:7px;border-radius:9999px;position:relative;overflow:hidden;
+    background:linear-gradient(90deg,var(--brandA),var(--brandB));
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.08), 0 4px 18px rgba(0,0,0,.28);
+  }
+  .sline::after{content:"";position:absolute;inset:0;mix-blend-mode:overlay;opacity:.9;
+    background:repeating-linear-gradient(90deg,rgba(255,255,255,.12) 0 12px, transparent 12px 24px);
+    animation:scan 1600ms linear infinite;
+  }
+  @keyframes scan{to{transform:translateX(24px)}}
+  .sline.flash{box-shadow:inset 0 0 0 2px var(--ring), 0 0 24px var(--glow)}
+</style>
+</head>
+<body>
+<div id="app" class="overlay" data-theme="nebula">
+  <header class="hstack">
+    <div class="chip">Monólito S‑Line</div>
+    <div class="chip">Pele: <b id="archName">—</b></div>
+    <span class="spacer"></span>
+    <button class="btn" id="btnRonda">Ronda ▶︎</button>
+    <button class="btn" id="btnStop" style="display:none">Parar ⏹</button>
+  </header>
+
+  <div class="panel"><div id="sline" class="sline"></div></div>
+
+  <div class="panel">
+    <div class="bar" id="archBar"><!-- botões via JSON --></div>
+  </div>
+  <div class="panel"><b>HEAT</b>: <span id="heat">—</span></div>
+  <div class="panel"><b>LOG</b><div id="log"></div></div>
+  <div class="panel hstack">
+    <button class="btn" id="btnClear">Limpar Log</button>
+    <button class="btn" id="btnResetSkin">Reset Pele</button>
+  </div>
+  <div class="panel" style="text-align:center;opacity:.7">Madeira cresceu • Metal selou • Marrabando ⚡🎸</div>
+</div>
+
+<script>
+/* =========================================================
+   BUS v2 — Metal guarda, Madeira expande
+   ========================================================= */
+window.InfodoseBus = window.InfodoseBus || (() => {
+  const L = JSON.parse(localStorage.getItem('infodose:log')||'[]');
+  const H = {}, last = new Map(), MAX = 400, THROTTLE_MS = 60;
+  const SCHEMA = {
+    'ARCH_PULSE': { arch:'string', act:'string*' },
+    'ACTION'    : { arch:'string', act:'string*', route:'string*' },
+    'HEAT_MARK' : { tag:'string*' }
+  };
+  const sane = (type,payload) => {
+    const sch = SCHEMA[type]; if(!sch) return true;
+    for (const k in sch){
+      const need=sch[k], opt=need.endsWith('*'), typ=opt?need.slice(0,-1):need;
+      const v = payload[k]; if (v==null){ if(!opt) return false; } else if (typeof v!==typ) return false;
+    }
+    return true;
+  };
+  const push = evt => {
+    L.unshift(evt); if (L.length>MAX) L.length = MAX;
+    localStorage.setItem('infodose:log', JSON.stringify(L));
+    const box = document.querySelector('#log');
+    if (box){
+      const d = document.createElement('div'); const hh = new Date(evt.ts).toLocaleTimeString();
+      d.className = 'log'; d.textContent = `[${hh}] ${evt.type} :: ${evt.arch||'-'} ${evt.act?('('+evt.act+')'):''}`;
+      box.appendChild(d); box.scrollTop = box.scrollHeight;
+    }
+  };
+  return {
+    emit(type, payload={}){
+      const now = Date.now(), lastTs = last.get(type)||0; if(now-lastTs < THROTTLE_MS) return;
+      if(!sane(type,payload)){ console.warn('bus:invalid', type, payload); return; }
+      last.set(type, now);
+      const evt = { type, ts: now, ...payload }; push(evt);
+      (H[type]||[]).forEach(fn => { try{ fn(evt) }catch(e){ console.error(e) } });
+      return evt;
+    },
+    on(type,fn){ (H[type]||(H[type]=[])).push(fn); return ()=> H[type]=(H[type]||[]).filter(f=>f!==fn); },
+    dump(){ return L.slice(); }
+  };
+})();
+
+/* =========================================================
+   ARCH JSON (12)
+   ========================================================= */
+const ARCH = {
+  nova   : { label:'Nova',    element:'madeira', theme:'nebula',  overlay:'rgba(255,82,177,.22)',  freq:528, mantra:'ideia flui agora' },
+  genus  : { label:'Genus',   element:'madeira', theme:'nebula',  overlay:'rgba(82,255,177,.20)',  freq:396, mantra:'exploro e descubro' },
+  lumine : { label:'Lumine',  element:'metal',   theme:'luxara',  overlay:'rgba(180,200,255,.20)', freq:741, mantra:'vejo o padrão'     },
+  solus  : { label:'Solus',   element:'metal',   theme:'luxara',  overlay:'rgba(220,240,255,.16)', freq:852, mantra:'começo limpo'      },
+  atlas  : { label:'Atlas',   element:'terra',   theme:'blue1',   overlay:'rgba(64,158,255,.22)',  freq:144, mantra:'clareza agora'     },
+  rhea   : { label:'Rhea',    element:'terra',   theme:'blue1',   overlay:'rgba(255,220,120,.18)', freq:174, mantra:'cuidar é poder'     },
+  kaos   : { label:'Kaos',    element:'fogo',    theme:'flare',   overlay:'rgba(255,77,109,.22)',  freq:432, mantra:'quebro limites'     },
+  artemis: { label:'Artemis', element:'fogo',    theme:'flare',   overlay:'rgba(255,140,60,.22)',  freq:285, mantra:'foco certeiro'      },
+  serena : { label:'Serena',  element:'água',    theme:'aqua',    overlay:'rgba(120,200,255,.18)', freq:396, mantra:'calma que cura'     },
+  aion   : { label:'Aion',    element:'água',    theme:'aqua',    overlay:'rgba(100,240,255,.16)', freq:963, mantra:'presença infinita'  },
+  pulse  : { label:'Pulse',   element:'ar',      theme:'sonar',   overlay:'rgba(0,191,255,.22)',   freq:432, mantra:'som vira forma'     },
+  vitalis: { label:'Vitalis', element:'ar',      theme:'sonar',   overlay:'rgba(34,211,146,.22)',  freq:528, mantra:'energia sobe'       },
+};
+
+/* =========================================================
+   Paleta S-Line por arquétipo
+   ========================================================= */
+const SL_COLORS = {
+  nova   : {a:'#FF52B1', b:'#FF9AD9', ring:'#FF52B1', glow:'rgba(255,82,177,.55)'},
+  genus  : {a:'#52FFB1', b:'#9DFFC8', ring:'#52FFB1', glow:'rgba(82,255,177,.45)'},
+  lumine : {a:'#AEC6FF', b:'#D6E0FF', ring:'#A7C4FF', glow:'rgba(167,196,255,.45)'},
+  solus  : {a:'#CFE7FF', b:'#EAF2FF', ring:'#CFE7FF', glow:'rgba(207,231,255,.40)'},
+  atlas  : {a:'#409EFF', b:'#7ABEFF', ring:'#3DB2FF', glow:'rgba(64,158,255,.45)'},
+  rhea   : {a:'#FFD773', b:'#FFE6A3', ring:'#FFC84A', glow:'rgba(255,200,74,.45)'},
+  kaos   : {a:'#FF4D6D', b:'#FF8AA1', ring:'#FF5A7A', glow:'rgba(255,77,109,.48)'},
+  artemis: {a:'#FF8C3C', b:'#FFB06A', ring:'#FF9A52', glow:'rgba(255,140,60,.48)'},
+  serena : {a:'#78C8FF', b:'#AEE0FF', ring:'#90D6FF', glow:'rgba(120,200,255,.45)'},
+  aion   : {a:'#64F0FF', b:'#B4F9FF', ring:'#78F3FF', glow:'rgba(100,240,255,.45)'},
+  pulse  : {a:'#00BFFF', b:'#3CE0FF', ring:'#00D9FF', glow:'rgba(0,191,255,.48)'},
+  vitalis: {a:'#22D392', b:'#72E5BE', ring:'#29E3A3', glow:'rgba(34,211,146,.45)'},
+};
+
+/* =========================================================
+   Icons inline (SVG)
+   ========================================================= */
+const ELEMENT_ACCENT = { madeira:'#7CFFB2', metal:'#A7C4FF', terra:'#FFD773', fogo:'#FF6A7A', 'água':'#7CD8FF', ar:'#66E0C2' };
+function iconSVG(key,cfg){
+  const letter = (cfg.label||key).slice(0,1).toUpperCase();
+  const accent = ELEMENT_ACCENT[cfg.element]||'#00c5ff';
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" aria-hidden="true">
+    <defs><radialGradient id="g${key}" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="${accent}" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#eaf1ff" stop-opacity="0.1"/>
+    </radialGradient></defs>
+    <rect width="128" height="128" rx="24" ry="24" fill="url(#g${key})" />
+    <circle cx="64" cy="64" r="42" fill="none" stroke="${accent}" stroke-width="3" opacity="0.85"/>
+    <text x="64" y="78" text-anchor="middle" font-family="ui-sans-serif,system-ui,Segoe UI,Arial" font-size="60" fill="#eaf1ff" opacity="0.95">${letter}</text>
+  </svg>`;
+}
+
+/* =========================================================
+   Som: WebAudio (beep / powerChord)
+   ========================================================= */
+let _ac;
+function ac(){ return _ac || (_ac = new (window.AudioContext||window.webkitAudioContext)()); }
+function beep(freq=432, ms=180){
+  try{
+    const ctx=ac(), o=ctx.createOscillator(), g=ctx.createGain();
+    o.type='sine'; o.frequency.value=freq; o.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(.001,ctx.currentTime); g.gain.exponentialRampToValueAtTime(.25,ctx.currentTime+.02);
+    o.start(); o.stop(ctx.currentTime + ms/1000);
+  }catch(e){}
+}
+function powerChord(arch){ // 5ª justa + oitava; release curto
+  try{
+    const f=(ARCH[arch]?.freq)||220, ctx=ac();
+    [1,1.5,2].forEach((m,i)=>{
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type= i? 'square':'sawtooth'; o.frequency.value=f*m; o.connect(g); g.connect(ctx.destination);
+      g.gain.setValueAtTime(.0001,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(.12/(i+1),ctx.currentTime+.01);
+      g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.26);
+      o.start(); o.stop(ctx.currentTime+.28);
+    });
+  }catch(e){}
+}
+
+/* =========================================================
+   Pele + Voz + S-Line
+   ========================================================= */
+function setSLine(arch){
+  const C = SL_COLORS[arch] || {};
+  const rs = document.documentElement.style;
+  rs.setProperty('--brandA', C.a || '#00c5ff');
+  rs.setProperty('--brandB', C.b || '#ff52e5');
+  rs.setProperty('--ring',   C.ring || '#00d9ff');
+  rs.setProperty('--glow',   C.glow || 'rgba(0,197,255,.45)');
+  const s = document.getElementById('sline'); if(s){ s.classList.add('flash'); setTimeout(()=>s.classList.remove('flash'), 220); }
+}
+const applyVibe = (arch) => {
+  const cfg = ARCH[arch]||{};
+  const app = document.getElementById('app') || document.body;
+  app.setAttribute('data-theme', cfg.theme||'nebula');
+  document.documentElement.style.setProperty('--arch-overlay', cfg.overlay||'rgba(0,0,0,0)');
+  localStorage.setItem('infodose:arch.active', arch);
+  const nameEl = document.getElementById('archName'); if(nameEl) nameEl.textContent = cfg.label || arch;
+  try{ if(cfg.mantra && 'speechSynthesis' in window){ const u=new SpeechSynthesisUtterance(cfg.mantra); u.lang='pt-BR'; speechSynthesis.speak(u); } }catch(e){}
+  setSLine(arch);
+  if (cfg.element==='metal') powerChord(arch); else beep(cfg.freq||432, 120);
+};
+window.InfodoseVibe = { apply: applyVibe };
+
+/* =========================================================
+   HEAT (telemetria)
+   ========================================================= */
+const HEAT = { hr:0, eng:0, ant:0, t0:Date.now() };
+const drawHeat = () => { const el = document.querySelector('#heat'); if(el) el.textContent = `HR:${HEAT.hr} • ENG:${HEAT.eng} • ANT:${HEAT.ant} • TTA:${Math.round((Date.now()-HEAT.t0)/1000)}s`; };
+InfodoseBus.on('ARCH_PULSE', ()=>{ HEAT.hr++; drawHeat(); });
+InfodoseBus.on('ACTION',     ()=>{ HEAT.eng++; drawHeat(); });
+const markAnt = ()=>{ HEAT.ant++; drawHeat(); };
+
+/* =========================================================
+   UI from JSON
+   ========================================================= */
+function buildArchButtons(){
+  const bar=document.getElementById('archBar'); if(!bar) return; bar.innerHTML='';
+  Object.entries(ARCH).forEach(([key,cfg])=>{
+    const b=document.createElement('button'); b.className='abtn'; b.dataset.arch=key; b.dataset.act='tap';
+    b.innerHTML = `${iconSVG(key,cfg)}<div><b>${cfg.label}</b><br><small>${cfg.element}</small></div>`;
+    bar.appendChild(b);
+  });
+}
+document.addEventListener('click',(ev)=>{
+  const b=ev.target.closest('[data-arch]'); if(!b) return;
+  const arch=b.getAttribute('data-arch'); const act=b.getAttribute('data-act')||'tap';
+  InfodoseBus.emit('ARCH_PULSE', { arch, act, user:(localStorage.getItem('infodose:userName')||'você') });
+  InfodoseBus.emit('ACTION',     { arch, act, route:`${arch}.${act}` });
+  applyVibe(arch);
+});
+
+/* =========================================================
+   Ronda (scan automático pelos 12)
+   ========================================================= */
+let _rondaTimer=null, _rondaI=0;
+function startRonda(secs=4){
+  stopRonda();
+  const order = Object.keys(ARCH);
+  const step = ()=>{
+    const k = order[_rondaI % order.length]; _rondaI++;
+    if (k) { applyVibe(k); InfodoseBus.emit('ARCH_PULSE', { arch:k, act:'ronda' }); }
+    _rondaTimer = setTimeout(step, secs*1000);
+  };
+  step();
+}
+function stopRonda(){ if(_rondaTimer){ clearTimeout(_rondaTimer); _rondaTimer=null; } }
+document.getElementById('btnRonda').addEventListener('click', ()=>{
+  startRonda(4); document.getElementById('btnRonda').style.display='none'; document.getElementById('btnStop').style.display='inline-block';
+});
+document.getElementById('btnStop').addEventListener('click', ()=>{
+  stopRonda(); document.getElementById('btnStop').style.display='none'; document.getElementById('btnRonda').style.display='inline-block';
+});
+
+/* =========================================================
+   Utilidades
+   ========================================================= */
+document.getElementById('btnClear').addEventListener('click', ()=>{
+  localStorage.setItem('infodose:log','[]');
+  const log = document.getElementById('log'); if (log) log.innerHTML='';
+});
+document.getElementById('btnResetSkin').addEventListener('click', ()=>{
+  localStorage.removeItem('infodose:arch.active');
+  document.getElementById('archName').textContent = '—';
+  document.documentElement.style.setProperty('--arch-overlay','rgba(0,0,0,0)');
+});
+
+/* =========================================================
+   Boot + SW (inline blob)
+   ========================================================= */
+buildArchButtons();
+(function(){
+  const last=localStorage.getItem('infodose:arch.active');
+  if (last && ARCH[last]) applyVibe(last);
+  drawHeat(); markAnt();
+  if('serviceWorker' in navigator){
+    const code = `
+      self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim())});
+      self.addEventListener('fetch', e=>{
+        e.respondWith((async()=>{
+          const c = await caches.open('idose-v1');
+          const r = await c.match(e.request);
+          if (r) return r;
+          try {
+            const f = await fetch(e.request);
+            if (e.request.method==='GET' && (e.request.destination==='document' || e.request.destination==='')){
+              c.put(e.request, f.clone());
+            }
+            return f;
+          } catch(err) {
+            const keys = await c.keys();
+            for (const k of keys){ if (k.mode==='navigate' || k.destination==='document'){ const rr = await c.match(k); if(rr) return rr; } }
+            return new Response('offline', {status:200, headers:{'Content-Type':'text/plain'}});
+          }
+        })());
+      });
+    `;
+    const blob = new Blob([code], {type:'text/javascript'});
+    const url  = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(url).catch(()=>{});
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,242 @@
+<!doctype html>
+<!-- KOBLLUX · HUB UNO PRESET PATCH v1.1 (layout fix)
+Drop‑in para aplicar temas/arquetipos/gradientes/botões + event‑bus em qualquer app do HUB.
+Ajuste: utilitários de layout para garantir que o botão/área do HUB fique EMBAIXO (quebra de linha controlada).
+-->
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>KOBLLUX · HUB UNO Preset Patch v1.1</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      /* Núcleo visual */
+      --bg:#0a0f15; --text:#e4e9f2;
+      --grad_a:#56c7ff; --grad_b:#7a8cff; /* default (metal-ish) */
+      --accent:#9ae6ff; --radius:20px; --blur:20px;
+      --shadow-outer:0 18px 40px rgba(16,30,54,.45);
+      --shadow-glow:0 8px 28px rgba(86,199,255,.25);
+      --border:1px solid rgba(150,190,255,.18);
+
+      /* Paletas por arquétipo */
+      --agua-a:#00d8ff;   --agua-b:#39ffb6;   --agua-txt:#001013;
+      --madeira-a:#78e08f;--madeira-b:#00b894;--madeira-txt:#02140e;
+      --fogo-a:#ff6b6b;   --fogo-b:#ffb86b;   --fogo-txt:#240b00;
+      --terra-a:#ffd166;  --terra-b:#8fd694;  --terra-txt:#1b1600;
+      --metal-a:#b4b7ff;  --metal-b:#00e1ff;  --metal-txt:#00121a;
+
+      --panel-grad: radial-gradient(120% 80% at 80% -10%, rgba(86,199,255,.14), transparent 60%),
+                    radial-gradient(100% 60% at -10% 10%, rgba(122,140,255,.12), transparent 60%),
+                    linear-gradient(180deg,#0b1220,#0a0f15 60%, #0a0f15);
+    }
+
+    html,body{height:100%}
+    body{margin:0;font-family:"Montserrat",system-ui;color:var(--text);background:var(--panel-grad)}
+    @supports(height: 100svh){ body{ min-height:100svh; } }
+    @supports(height: 100dvh){ body{ min-height:100dvh; } }
+
+    /* Base utilitária */
+    .glass{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));backdrop-filter:blur(var(--blur));
+      border:var(--border);border-radius:var(--radius);box-shadow:var(--shadow-outer),var(--shadow-glow);}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:14px;border:1px solid rgba(200,220,255,.20);
+      color:var(--text);background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));
+      box-shadow:0 2px 8px rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,255,255,.06);cursor:pointer;user-select:none;text-decoration:none;transition:.2s transform,.2s opacity}
+    .btn:hover{transform:translateY(-1px)} .btn:active{transform:translateY(0)}
+    .btn.primary{background:linear-gradient(135deg,var(--grad_a),var(--grad_b)); color:#00131c}
+    .ellip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+    /* Botões com assinatura por arquétipo */
+    .btn[data-arch="agua"]{background:linear-gradient(135deg,var(--agua-a),var(--agua-b));color:var(--agua-txt)}
+    .btn[data-arch="madeira"]{background:linear-gradient(135deg,var(--madeira-a),var(--madeira-b));color:var(--madeira-txt)}
+    .btn[data-arch="fogo"]{background:linear-gradient(135deg,var(--fogo-a),var(--fogo-b));color:var(--fogo-txt)}
+    .btn[data-arch="terra"]{background:linear-gradient(135deg,var(--terra-a),var(--terra-b));color:var(--terra-txt)}
+    .btn[data-arch="metal"]{background:linear-gradient(135deg,var(--metal-a),var(--metal-b));color:var(--metal-txt)}
+
+    /* Demo área (pode apagar ao integrar) */
+    .wrap{max-width:1100px;margin:0 auto;padding:24px}
+    .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;margin:12px 0}
+    .pill{display:inline-flex;gap:8px;align-items:center;padding:8px 10px;border-radius:999px;font-size:12px;
+      background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid rgba(160,200,255,.22)}
+    .seg{display:inline-flex;border-radius:12px;border:1px solid rgba(160,200,255,.28);overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02))}
+    .seg-btn{padding:10px 12px;background:transparent;border:0;color:var(--text);cursor:pointer}
+    .seg-btn+.seg-btn{border-left:1px solid rgba(160,200,255,.18)}
+    .seg-btn.active{background:linear-gradient(135deg,var(--grad_a),var(--grad_b));color:#00131c}
+
+    /* Card demo */
+    .card{padding:16px;display:grid;grid-template-columns:auto 140px;gap:12px;align-items:center}
+    .viz{width:140px;height:140px;display:grid;place-items:center;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.02));
+      border-radius:14px;border:1px dashed rgba(180,210,255,.20)}
+
+    /* ===== UTIL: quebra controlada para o botão/área do HUB ficar embaixo ===== */
+    /* faz grupos ocuparem a linha inteira */
+    .toolbar .seg{flex:1 1 100%}
+    .toolbar .pill{flex:1 1 100%}
+    /* força o PRIMEIRO botão do hub a iniciar nova linha */
+    .toolbar .btn[data-arch]:first-of-type{flex-basis:100%}
+    /* em telas largas, os botões seguem na linha abaixo lado a lado */
+    @media(min-width:900px){ .toolbar .btn[data-arch]{flex:0 0 auto} }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="glass" style="padding:14px 16px;margin-bottom:10px">
+      <div class="ellip" style="font-weight:800">KOBLLUX — HUB UNO Preset Patch v1.1</div>
+      <div class="ellip" style="opacity:.8;font-size:12px">Gradiente em tudo · botões com arquétipos · event‑bus · salvamento automático · <b>layout fix</b>.</div>
+    </div>
+
+    <div class="toolbar">
+      <div class="seg" role="tablist" aria-label="Arquétipo global">
+        <button class="seg-btn active" data-arch-swap="metal">Metal</button>
+        <button class="seg-btn" data-arch-swap="agua">Água</button>
+        <button class="seg-btn" data-arch-swap="madeira">Madeira</button>
+        <button class="seg-btn" data-arch-swap="fogo">Fogo</button>
+        <button class="seg-btn" data-arch-swap="terra">Terra</button>
+      </div>
+      <span class="pill">theme ↔ <span id="archNow">metal</span></span>
+      <!-- os botões do HUB começam automaticamente na linha de baixo por CSS -->
+      <button class="btn" data-arch="metal" data-act="ping">Ping (metal)</button>
+      <button class="btn" data-arch="agua" data-act="ping">Ping (água)</button>
+      <button class="btn" data-arch="fogo" data-act="ping">Ping (fogo)</button>
+      <button class="btn" data-arch="terra" data-act="ping">Ping (terra)</button>
+      <button class="btn" data-arch="madeira" data-act="ping">Ping (madeira)</button>
+    </div>
+
+    <div class="glass card">
+      <div>
+        <div style="font-weight:600">Como integrar</div>
+        <ol style="margin:8px 0 0 18px;opacity:.9">
+          <li>Copie o <b>&lt;style&gt;</b> e o <b>&lt;script&gt;</b> deste arquivo para o seu HUB.</li>
+          <li>Chame <code>KOBLLUX_HUB.apply()</code> uma vez (já chamamos automaticamente).</li>
+          <li>Marque botões com <code>data-arch</code> (agua/madeira/fogo/terra/metal) e <code>data-act</code>.</li>
+        </ol>
+        <div class="pill" style="margin-top:10px">Dica: salvei a escolha do arquétipo em <code>localStorage: infodose:arch</code>.</div>
+      </div>
+      <div class="viz">UNO</div>
+    </div>
+
+    <div class="glass" style="padding:10px 14px;margin-top:12px">
+      <pre id="log" style="white-space:pre-wrap;max-height:180px;overflow:auto;margin:0"></pre>
+    </div>
+  </div>
+
+  <script>
+  'use strict';
+  /* ===== Event‑Bus mínimo (reusa se já existir) ===== */
+  window.InfodoseBus = window.InfodoseBus || (function(){
+    const L = JSON.parse(localStorage.getItem('infodose:log')||'[]');
+    const H = {}; // handlers
+    const push = evt => {
+      L.unshift(evt);
+      localStorage.setItem('infodose:log', JSON.stringify(L.slice(0,400)));
+      try { localStorage.setItem('infodose:last', JSON.stringify(evt)); } catch(e){}
+    };
+    return {
+      emit(type, payload={}){
+        const evt = { type, ts: Date.now(), ...payload };
+        push(evt);
+        (H[type]||[]).forEach(fn=>{ try{ fn(evt); }catch(e){} });
+        return evt;
+      },
+      on(type, fn){ (H[type]||(H[type]=[])).push(fn); return ()=> H[type] = (H[type]||[]).filter(f=>f!==fn); },
+      dump(){ return L.slice(); }
+    };
+  })();
+
+  /* ===== HUB UNO preset ===== */
+  (function(){
+    const ARCH = {
+      agua:{a:'var(--agua-a)',b:'var(--agua-b)',txt:'var(--agua-txt)'},
+      madeira:{a:'var(--madeira-a)',b:'var(--madeira-b)',txt:'var(--madeira-txt)'},
+      fogo:{a:'var(--fogo-a)',b:'var(--fogo-b)',txt:'var(--fogo-txt)'},
+      terra:{a:'var(--terra-a)',b:'var(--terra-b)',txt:'var(--terra-txt)'},
+      metal:{a:'var(--metal-a)',b:'var(--metal-b)',txt:'var(--metal-txt)'}
+    };
+
+    function setVars(arch){
+      const p = ARCH[arch] || ARCH.metal;
+      const r = document.documentElement;
+      r.style.setProperty('--grad_a', getComputedStyle(r).getPropertyValue(p.a)||'#56c7ff');
+      r.style.setProperty('--grad_b', getComputedStyle(r).getPropertyValue(p.b)||'#7a8cff');
+      try{ localStorage.setItem('infodose:arch', arch); }catch(e){}
+      const label = document.getElementById('archNow'); if(label) label.textContent = arch;
+    }
+
+    function applyVibe(arch){
+      setVars(arch);
+      window.InfodoseBus.emit('ARCH_PULSE',{arch});
+    }
+
+    function restore(){
+      try{ return localStorage.getItem('infodose:arch') || 'metal'; }catch(e){ return 'metal'; }
+    }
+
+    function bindSeg(){
+      document.querySelectorAll('[data-arch-swap]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          document.querySelectorAll('[data-arch-swap]').forEach(b=>b.classList.remove('active'));
+          btn.classList.add('active');
+          applyVibe(btn.getAttribute('data-arch-swap'));
+        });
+      });
+    }
+
+    function delegateButtons(){
+      document.addEventListener('click', ev=>{
+        const b = ev.target.closest('[data-arch]');
+        if(!b) return;
+        const arch = b.getAttribute('data-arch');
+        const act  = b.getAttribute('data-act')||'tap';
+        window.InfodoseBus.emit('ACTION',{arch,act,route:`${arch}.${act}`});
+      });
+    }
+
+    function syncBetweenTabs(){
+      addEventListener('storage', (e)=>{
+        if(e.key==='infodose:arch' && e.newValue){ setVars(e.newValue); }
+        if(e.key==='infodose:last' && e.newValue){ try{ const evt=JSON.parse(e.newValue); log(`[sync] ${evt.type} · ${evt.arch||''}`); }catch(_){} }
+      });
+    }
+
+    function log(s){ const el=document.getElementById('log'); if(!el) return; el.textContent += (el.textContent? '\n':'') + s; el.scrollTop = el.scrollHeight; }
+
+    // Expor API
+    window.KOBLLUX_HUB = {
+      apply(opts={}){
+        const arch = opts.defaultArch || restore();
+        setVars(arch);
+        bindSeg();
+        delegateButtons();
+        syncBetweenTabs();
+        log(`UNO preset ativo · arch=${arch}`);
+        selfTests();
+      }
+    };
+
+    function selfTests(){
+      try{
+        console.group('KOBLLUX UNO · self-tests');
+        const arch = restore();
+        console.assert(!!arch, 'arch não restaurado');
+        const evt = window.InfodoseBus.emit('TEST',{ok:true});
+        console.assert(evt && evt.type==='TEST','bus emit falhou');
+        log('✓ bus ok · ✓ arch ok');
+        console.groupEnd();
+      }catch(err){ log('✗ self-tests: '+err.message); }
+    }
+
+  })();
+
+  // Auto‑apply on load
+  (function(){ try{ window.KOBLLUX_HUB.apply(); }catch(e){ console.error(e); } })();
+
+  // Demo: ouvir eventos e logar
+  (function(){
+    const logEl = document.getElementById('log');
+    if(!logEl) return;
+    window.InfodoseBus.on('ARCH_PULSE', e=>{ log(`[ARCH_PULSE] ${e.arch}`); });
+    window.InfodoseBus.on('ACTION', e=>{ log(`[ACTION] ${e.route}`); });
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Masterclass KOBLLUX — Madeira & Mago Metal</title>
+  <style>
+    /* MOBILE-FIRST VERTICAL HARD-LOCK + pele Nebula */
+    :root{
+      --bg0:#05060a; --bg1:#0b0f1a; --text:#eaf1ff; --muted:#9fb3c8;
+      --arch-overlay: rgba(0,0,0,0);
+      --radius:16px;
+    }
+    html, body { height: 100%; }
+    body{margin:0;background:linear-gradient(180deg,var(--bg0),var(--bg1));color:var(--text);font:500 15px/1.55 ui-sans-serif,system-ui;-webkit-font-smoothing:antialiased}
+    #app{padding:14px; min-height: 100vh;}
+    .bar{display:flex;gap:8px;flex-wrap:wrap}
+    .btn{flex:1 1 calc(50% - 8px);min-width:140px;border:0;border-radius:var(--radius);padding:12px 14px;
+         background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,.02));
+         box-shadow:0 6px 18px rgba(0,0,0,.25);color:#fff; cursor: pointer; transition: all 0.1s ease-out;}
+    .btn:active{transform:scale(.98); box-shadow:0 3px 10px rgba(0,0,0,.35);}
+    .panel{margin-top:12px;border-radius:var(--radius);padding:12px;background:rgba(255,255,255,.04); backdrop-filter: blur(10px);}
+    #log{max-height:32vh;overflow:auto; margin-top: 8px; padding-right: 4px; /* espaço para barra de scroll */}
+    .log{opacity:.9;font:500 12px/1.4 ui-monospace,Menlo,Consolas;padding:6px 0;border-bottom:1px dashed rgba(255,255,255,.06); word-break: break-all;}
+    .log:last-child {border-bottom: none;}
+    .overlay::before{content:"";position:fixed;inset:0;pointer-events:none;background:var(--arch-overlay);mix-blend-mode:screen;transition:.25s}
+    .testbar { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px }
+    .tag { display:inline-block; padding:.22rem .5rem; border:1px solid rgba(255,255,255,.12); border-radius:999px; font-size:12px; color:var(--muted) }
+  </style>
+</head>
+<body>
+  <div id="app" class="overlay">
+    <div class="panel">
+      <div class="bar" id="archBar"><!-- botões gerados via JSON --></div>
+      <!-- Self‑Test / QA -->
+      <div class="testbar">
+        <button class="btn" id="btnTestBus">QA: Bus</button>
+        <button class="btn" id="btnTestAudio">QA: Audio</button>
+        <button class="btn" id="btnClearLog">QA: Limpar Log</button>
+        <span class="tag">Masterclass KOBLLUX — QA</span>
+      </div>
+    </div>
+    <div class="panel"><b>HEAT</b>: <span id="heat">HR:000 • ENG:000 • ANT:000 • TTA:000s</span></div>
+    <div class="panel">
+      <b>LOG</b>
+      <div id="log"></div>
+    </div>
+  </div>
+
+  <script>
+  /* ========== BUS v2: Madeira libera, Metal protege ========== */
+  window.InfodoseBus = (() => {
+    // 1) Memória (Metal - Nomeação estável)
+    const L = JSON.parse(localStorage.getItem('infodose:log')||'[]');
+    const H = {};
+    const last = new Map();            // anti-spam por tipo
+    const MAX = 400;                   // log circular
+    const THROTTLE_MS = 60;            // metal corta rajada
+    const SCHEMA = {                   // contrato leve (metal)
+      'ARCH_PULSE': { arch:'string', act:'string*' },
+      'ACTION'    : { arch:'string', act:'string*', route:'string*' },
+      'HEAT_MARK' : { tag :'string*' }
+    };
+
+    // 2) Metal - Contrato leve (guard)
+    const sane = (type,payload) => {
+      const sch = SCHEMA[type]; if(!sch) return true; // tipos novos (madeira) passam
+      for (const k in sch){
+        const need = sch[k], opt = need.endsWith('*'), typ = opt?need.slice(0,-1):need;
+        const v = payload[k];
+        if (v==null) { if(!opt) { console.warn(`Bus guard: Missing required key '${k}' for type ${type}`); return false; } } 
+        else if (typeof v!==typ) { console.warn(`Bus guard: Key '${k}' is type ${typeof v}, expected ${typ} for type ${type}`); return false; }
+      }
+      return true;
+    };
+
+    // 3) Log (Metal - Persistência/Terra)
+    const push = evt => {
+      L.unshift(evt); if (L.length>MAX) L.length = MAX;
+      localStorage.setItem('infodose:log', JSON.stringify(L));
+      const box = document.querySelector('#log');
+      if (box){
+        const d = document.createElement('div');
+        const hh = new Date(evt.ts).toLocaleTimeString();
+        d.className = 'log'; 
+        // Adaptação para logar rota de forma mais clara
+        const actionInfo = evt.act ? `(${evt.act})` : '';
+        const routeInfo = evt.route ? ` [${evt.route}]` : '';
+        d.textContent = `[${hh}] ${evt.type} :: ${evt.arch||'-'} ${actionInfo}${routeInfo}`;
+        // Inserir no topo
+        box.insertBefore(d, box.firstChild);
+        box.scrollTop = 0; 
+      }
+    };
+
+    // 4) Metal - Anti-rajada (Throttle)
+    return {
+      emit(type, payload={}){
+        const now = Date.now();
+        const lastTs = last.get(type)||0;
+        if (now-lastTs < THROTTLE_MS) {
+          console.log(`Bus: Throttled ${type}`);
+          return; // proteção anti-spam
+        } 
+        if (!sane(type,payload)) { console.warn('Bus: Contrato Inválido', type, payload); return; }
+        // 5) Metal - Idempotência por janela curta
+        last.set(type, now); 
+        const evt = { type, ts: now, ...payload };
+        push(evt);
+        (H[type]||[]).forEach(fn => { try{ fn(evt) }catch(e){ console.error(`Bus Handler Error for ${type}:`, e) } });
+        return evt;
+      },
+      on(type, fn){ (H[type]||(H[type]=[])).push(fn); return () => H[type]= (H[type]||[]).filter(f=>f!==fn); },
+      dump(){ return L.slice(); }
+    };
+  })();
+
+  /* ========== ARCH (12) + mapeamento Elemento → assinatura (Madeira - Semente) ========== */
+  const ARCH = {
+    // madeira — criador / explorador
+    nova   : { label:'Nova',    element:'madeira', theme:'nebula',  overlay:'rgba(255,82,177,.22)',  freq:528, mantra:'ideia flui agora' },
+    genus  : { label:'Genus',   element:'madeira', theme:'nebula',  overlay:'rgba(82,255,177,.20)',  freq:396, mantra:'exploro e descubro' },
+    // metal — mago / inocente
+    lumine : { label:'Lumine',  element:'metal',   theme:'luxara',  overlay:'rgba(180,200,255,.20)', freq:741, mantra:'vejo o padrão'     },
+    solus  : { label:'Solus',   element:'metal',   theme:'luxara',  overlay:'rgba(220,240,255,.16)', freq:852, mantra:'começo limpo'      },
+    // terra — governante / prestativo
+    atlas  : { label:'Atlas',   element:'terra',   theme:'blue1',   overlay:'rgba(64,158,255,.22)',  freq:144, mantra:'clareza agora'     },
+    rhea   : { label:'Rhea',    element:'terra',   theme:'blue1',   overlay:'rgba(255,220,120,.18)', freq:174, mantra:'cuidar é poder'     },
+    // fogo — herói / rebelde
+    kaos   : { label:'Kaos',    element:'fogo',    theme:'flare',   overlay:'rgba(255,77,109,.22)',  freq:432, mantra:'quebro limites'     },
+    artemis: { label:'Artemis', element:'fogo',    theme:'flare',   overlay:'rgba(255,140,60,.22)',  freq:285, mantra:'foco certeiro'      },
+    // água — cuidador / sábio
+    serena : { label:'Serena',  element:'água',    theme:'aqua',    overlay:'rgba(120,200,255,.18)', freq:396, mantra:'calma que cura'     },
+    aion   : { label:'Aion',    element:'água',    theme:'aqua',    overlay:'rgba(100,240,255,.16)', freq:963, mantra:'presença infinita'  },
+    // ar/pulso — som/forma
+    pulse  : { label:'Pulse',   element:'ar',      theme:'sonar',   overlay:'rgba(0,191,255,.22)',   freq:432, mantra:'som vira forma'     },
+    vitalis: { label:'Vitalis', element:'ar',      theme:'sonar',   overlay:'rgba(34,211,146,.22)',  freq:528, mantra:'energia sobe'       },
+  };
+
+  /* ========== Pele + voz + riff metal (Metal - Patch Core) ========== */
+  const applyVibe = (arch) => {
+    const cfg = ARCH[arch]||{};
+    const app = document.querySelector('#app') || document.body;
+    // Patch Pre: Define tokens/variáveis
+    app.setAttribute('data-theme', cfg.theme||'nebula');
+    document.documentElement.style.setProperty('--arch-overlay', cfg.overlay||'rgba(0,0,0,0)');
+    // PWA Memória de Pele
+    localStorage.setItem('infodose:arch.active', arch); 
+    // TTS mantra
+    try{ if (cfg.mantra && 'speechSynthesis' in window){
+      const u = new SpeechSynthesisUtterance(cfg.mantra); u.lang='pt-BR'; u.volume = 0.8; window.speechSynthesis.speak(u);
+    }}catch(e){ console.error("TTS Falhou:", e); }
+    // WebAudio (riff metal 🎸)
+    if (cfg.element==='metal') powerChord(arch);
+  };
+
+  let _ac;
+  function ac(){ return _ac || (_ac = new (window.AudioContext||window.webkitAudioContext)()); }
+  async function ensureAudioGesture(){ try { const ctx = ac(); if (ctx.state === 'suspended') await ctx.resume(); } catch(e){} }
+  function beep(freq=432, ms=180){
+    const ctx = ac(), o = ctx.createOscillator(), g = ctx.createGain();
+    o.type='sine'; o.frequency.value=freq; o.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(.001,ctx.currentTime); g.gain.exponentialRampToValueAtTime(.25,ctx.currentTime+.02);
+    o.start(); o.stop(ctx.currentTime + ms/1000);
+  }
+  function powerChord(arch){ // simples power-chord 5ª justa
+    const f = (ARCH[arch]?.freq)||220, ctx=ac();
+    [1, 1.5, 2].forEach((m,i)=>{
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type= i? 'square':'sawtooth'; o.frequency.value=f*m; o.connect(g); g.connect(ctx.destination);
+      g.gain.setValueAtTime(.0001,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(.15/(i+1),ctx.currentTime+.01);
+      g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.28);
+      o.start(); o.stop(ctx.currentTime+.30);
+    });
+  }
+
+  /* ========== HEAT (telemetria simbólica - Post Patch) ========== */
+  const HEAT = { hr:0, eng:0, ant:0, t0:Date.now() };
+  const drawHeat = () => {
+    const el = document.querySelector('#heat');
+    if(el) el.textContent = `HR:${HEAT.hr.toString().padStart(3, '0')} • ENG:${HEAT.eng.toString().padStart(3, '0')} • ANT:${HEAT.ant.toString().padStart(3, '0')} • TTA:${Math.round((Date.now()-HEAT.t0)/1000).toString().padStart(3, '0')}s`;
+  };
+  InfodoseBus.on('ARCH_PULSE', ()=>{ HEAT.hr++; drawHeat(); });
+  InfodoseBus.on('ACTION',     ()=>{ HEAT.eng++; drawHeat(); });
+  const markAnt = ()=>{ HEAT.ant++; drawHeat(); };
+
+  /* ========== UI (Madeira gera da semente JSON) ========== */
+  function buildArchButtons(){
+    const bar = document.querySelector('#archBar'); if(!bar) return;
+    bar.innerHTML = '';
+    Object.entries(ARCH).forEach(([key,cfg])=>{
+      const b = document.createElement('button');
+      b.className = 'btn';
+      b.dataset.arch = key; b.dataset.act  = 'tap';
+      b.innerHTML = `<b>${cfg.label}</b><br><small>${cfg.element}</small>`;
+      bar.appendChild(b);
+    });
+  }
+
+  // Fogo ativa - Ligar eventos
+  document.addEventListener('click', async (ev)=>{
+    const b = ev.target.closest('[data-arch]'); if(!b) return;
+    await ensureAudioGesture();
+    const arch = b.getAttribute('data-arch');
+    const act  = b.getAttribute('data-act') || 'tap';
+    InfodoseBus.emit('ARCH_PULSE', { arch, act, user:(localStorage.getItem('infodose:userName')||'você') });
+    InfodoseBus.emit('ACTION', { arch, act, route:`${arch}.${act}` });
+    applyVibe(arch);
+    if (ARCH[arch]?.element!=='metal') beep(ARCH[arch]?.freq||432, 120);
+  });
+
+  // === QA Buttons ===
+  document.getElementById('btnTestBus')?.addEventListener('click', ()=>{
+    InfodoseBus.emit('ARCH_PULSE', { arch:'atlas', act:'qa' });
+    InfodoseBus.emit('ACTION', { arch:'atlas', act:'qa', route:'atlas.qa' });
+    markAnt();
+  });
+  document.getElementById('btnTestAudio')?.addEventListener('click', async ()=>{
+    await ensureAudioGesture();
+    beep(528, 140); // teste simples
+    powerChord('lumine'); // metal test
+  });
+  document.getElementById('btnClearLog')?.addEventListener('click', ()=>{
+    localStorage.setItem('infodose:log','[]');
+    const box=document.getElementById('log'); if(box) box.innerHTML='';
+    InfodoseBus.emit('HEAT_MARK',{tag:'clear'});
+  });
+
+  // boot - Metal (restaura) + Madeira (constrói)
+  buildArchButtons();
+  (function restore(){
+    try{
+      const last = localStorage.getItem('infodose:arch.active');
+      if (last && ARCH[last]) applyVibe(last);
+      const logBox = document.querySelector('#log');
+      if (logBox) {
+        const dump = InfodoseBus.dump();
+        for (let i=dump.length-1; i>=0; i--){
+          const evt = dump[i];
+          const d = document.createElement('div');
+          const hh = new Date(evt.ts).toLocaleTimeString();
+          const actionInfo = evt.act ? `(${evt.act})` : '';
+          const routeInfo = evt.route ? ` [${evt.route}]` : '';
+          d.className = 'log';
+          d.textContent = `[${hh}] ${evt.type} :: ${evt.arch||'-'} ${actionInfo}${routeInfo}`;
+          logBox.insertBefore(d, logBox.firstChild);
+        }
+        logBox.scrollTop = 0;
+      }
+      drawHeat(); markAnt();
+    }catch(e){ console.error('restore failed', e); }
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Preset KOBLLUX Archetype-Bus+</title>
+  <style>
+    /* ========== KOBLLUX VIBE: MOBILE-FIRST + PELE ARQUÉTIPO (Metal: Ordem de Patch Pre) ========== */
+    :root{
+      --bg0:#05060a; --bg1:#0b0f1a; --text:#eaf1ff; --muted:#9fb3c8;
+      --arch-overlay: rgba(0,0,0,0);
+      --arch-shadow: 0 0 0 rgba(0,0,0,0);
+      --radius:16px;
+    }
+    body{
+      margin:0;
+      background:linear-gradient(180deg,var(--bg0),var(--bg1));
+      color:var(--text);
+      font:600 15px/1.55 'Inter', ui-sans-serif,system-ui;
+      -webkit-font-smoothing:antialiased
+    }
+    #app{padding:14px; min-height: 100vh;}
+    
+    /* Cores Temáticas para um visual mais KOBLLUX (exemplo, para data-theme) */
+    [data-theme="luxara"]{--bg1:#181206; --arch-glow:#d4af37;}
+    [data-theme="nebula"]{--bg1:#0b0f1a; --arch-glow:#ff52e5;}
+    [data-theme="flare"]{--bg1:#1a0f0b; --arch-glow:#ff4d6d;}
+    [data-theme="aqua"]{--bg1:#0a1216; --arch-glow:#a0e6ff;}
+    [data-theme="blue1"]{--bg1:#090d16; --arch-glow:#409eff;}
+    [data-theme="sonar"]{--bg1:#09160d; --arch-glow:#22d392;}
+
+    .bar{display:flex;gap:8px;flex-wrap:wrap}
+    .btn{
+      flex:1 1 calc(50% - 8px); min-width:140px;
+      border:0; border-radius:var(--radius); padding:16px 14px;
+      background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,.02));
+      box-shadow:var(--arch-shadow), 0 6px 20px rgba(0,0,0,.3);
+      color:#fff; cursor: pointer; transition: all 0.2s ease-out;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center;
+    }
+    .btn:active{transform:scale(.98); box-shadow:var(--arch-shadow), 0 3px 10px rgba(0,0,0,.45);}
+    .btn-label{font-size: 1.1em; font-weight: 800; margin-bottom: 4px;}
+    .btn-element{font-size: 0.8em; font-weight: 500; opacity: 0.7;}
+    .btn-icon{width: 32px; height: 32px; margin-bottom: 8px;}
+    .btn-icon path, .btn-icon rect {fill: currentColor;}
+
+    .panel{margin-top:12px;border-radius:var(--radius);padding:16px;background:rgba(255,255,255,.04); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.1);}
+    #log{max-height:30vh;overflow-y:scroll; overflow-x: hidden; margin-top: 8px; padding-right: 4px; /* espaço para barra de scroll */ }
+    .log{opacity:.9;font:500 12px/1.4 ui-monospace,Menlo,Consolas;padding:6px 0;border-bottom:1px dashed rgba(255,255,255,.06); word-break: break-all;}
+    .log:last-child {border-bottom: none;}
+    
+    /* Overlay Simbiótico (Madeira) */
+    .overlay::before{content:"";position:fixed;inset:0;pointer-events:none;background:var(--arch-overlay);mix-blend-mode:screen;transition:.3s cubic-bezier(0.25, 0.1, 0.25, 1)}
+  </style>
+
+  <div id="app" class="overlay">
+    <div class="panel">
+      <div class="bar" id="archBar"><!-- Madeira: botões gerados via JSON ARCH --></div>
+    </div>
+    <div class="panel"><b>HEAT (Telemetria)</b>: <span id="heat">—</span></div>
+    <div class="panel">
+      <b>LOG (Bus Registrado)</b>
+      <div id="log"></div>
+    </div>
+  </div>
+
+  <script>
+  /* ========== BUS v3: Madeira libera, Metal protege (Mago Metal: Contrato/Guarda) ========== */
+  window.InfodoseBus = (() => {
+    // Metal - Nomeação estável (Chaves LS)
+    const LS_LOG = 'infodose:log';
+    const L = JSON.parse(localStorage.getItem(LS_LOG)||'[]');
+    const H = {};
+    const last = new Map();            
+    const MAX = 400;                   
+    const THROTTLE_MS = 60;            
+    const SCHEMA = {                   
+      'ARCH_PULSE': { arch:'string', act:'string*' },
+      'ACTION'    : { arch:'string', act:'string*', route:'string*' },
+      'HEAT_MARK' : { tag :'string*' }
+    };
+    
+    const sane = (type,payload) => {
+      const sch = SCHEMA[type]; if(!sch) return true; // Madeira: tipos novos passam no guard
+      for (const k in sch){
+        const need = sch[k], opt = need.endsWith('*'), typ = opt?need.slice(0,-1):need;
+        const v = payload[k];
+        if (v==null) { if(!opt) return false; } 
+        else if (typeof v!==typ) return false;
+      }
+      return true;
+    };
+    
+    const push = evt => {
+      L.unshift(evt); if (L.length>MAX) L.length = MAX;
+      localStorage.setItem(LS_LOG, JSON.stringify(L));
+      const box = document.querySelector('#log');
+      if (box){
+        const d = document.createElement('div');
+        const hh = new Date(evt.ts).toLocaleTimeString();
+        const actionInfo = evt.act ? `(${evt.act})` : '';
+        const routeInfo = evt.route ? ` [${evt.route}]` : '';
+        d.className = 'log'; 
+        d.textContent = `[${hh}] ${evt.type} :: ${evt.arch||'-'} ${actionInfo}${routeInfo}`;
+        
+        // Inserir no topo para logar do mais novo para o mais antigo (UX)
+        if (box.firstChild) {
+          box.insertBefore(d, box.firstChild);
+        } else {
+          box.appendChild(d);
+        }
+        box.scrollTop = 0; // Vai para o topo
+      }
+    };
+    
+    return {
+      emit(type, payload={}){
+        const now = Date.now();
+        const lastTs = last.get(type)||0;
+        // Metal - Proteção anti-rajada
+        if (now-lastTs < THROTTLE_MS) return; 
+        if (!sane(type,payload)) { console.warn('Bus: Contrato Inválido', type, payload); return; }
+        
+        last.set(type, now); 
+        
+        const evt = { type, ts: now, ...payload };
+        push(evt);
+        // Fogo ativa o fluxo
+        (H[type]||[]).forEach(fn => { try{ fn(evt) }catch(e){ console.error(`Bus Handler Error for ${type}:`, e) } });
+        return evt;
+      },
+      on(type, fn){ 
+        (H[type]||(H[type]=[])).push(fn); 
+        return () => H[type]= (H[type]||[]).filter(f=>f!==fn); 
+      },
+      dump(){ return L.slice(); }
+    };
+  })();
+
+  /* ========== ARCH (12) + mapeamento Elemento → assinatura (Madeira: Semente JSON) ========== */
+  const ARCH = {
+    // Elemento: Madeira — Símbolo: Broto / Crescimento
+    nova   : { label:'Nova',    element:'madeira', theme:'nebula',  overlay:'rgba(255,82,177,.22)',  freq:528, mantra:'ideia flui agora', icon:'bud' },
+    genus  : { label:'Genus',   element:'madeira', theme:'nebula',  overlay:'rgba(82,255,177,.20)',  freq:396, mantra:'exploro e descubro', icon:'bud' },
+    // Elemento: Metal — Símbolo: Anel / Contrato
+    lumine : { label:'Lumine',  element:'metal',   theme:'luxara',  overlay:'rgba(180,200,255,.20)', freq:741, mantra:'vejo o padrão', icon:'ring'     },
+    solus  : { label:'Solus',   element:'metal',   theme:'luxara',  overlay:'rgba(220,240,255,.16)', freq:852, mantra:'começo limpo', icon:'ring'      },
+    // Elemento: Terra — Símbolo: Cubo / Base
+    atlas  : { label:'Atlas',   element:'terra',   theme:'blue1',   overlay:'rgba(64,158,255,.22)',  freq:144, mantra:'clareza agora', icon:'cube'     },
+    rhea   : { label:'Rhea',    element:'terra',   theme:'blue1',   overlay:'rgba(255,220,120,.18)', freq:174, mantra:'cuidar é poder', icon:'cube'     },
+    // Elemento: Fogo — Símbolo: Chama / Ação
+    kaos   : { label:'Kaos',    element:'fogo',    theme:'flare',   overlay:'rgba(255,77,109,.22)',  freq:432, mantra:'quebro limites', icon:'flame'     },
+    artemis: { label:'Artemis', element:'fogo',    theme:'flare',   overlay:'rgba(255,140,60,.22)',  freq:285, mantra:'foco certeiro', icon:'flame'      },
+    // Elemento: Água — Símbolo: Onda / Fluxo
+    serena : { label:'Serena',  element:'água',    theme:'aqua',    overlay:'rgba(120,200,255,.18)', freq:396, mantra:'calma que cura', icon:'wave'     },
+    aion   : { label:'Aion',    element:'água',    theme:'aqua',    overlay:'rgba(100,240,255,.16)', freq:963, mantra:'presença infinita', icon:'wave'  },
+    // Elemento: Ar/Pulso — Símbolo: Espiral / Sinal
+    pulse  : { label:'Pulse',   element:'ar',      theme:'sonar',   overlay:'rgba(0,191,255,.22)',   freq:432, mantra:'som vira forma', icon:'spiral'     },
+    vitalis: { label:'Vitalis', element:'ar',      theme:'sonar',   overlay:'rgba(34,211,146,.22)',  freq:528, mantra:'energia sobe', icon:'spiral'       },
+  };
+
+  /* ========== Ícones SVG Inline (simulação de assets/icons) ========== */
+  const ICONS = {
+    // Madeira: Broto (Bud)
+    bud: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
+    // Metal: Anel (Ring)
+    ring: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 5V9.5a2.5 2.5 0 0 1-5 0V5"/><path d="M4 19V14.5a2.5 2.5 0 0 1 5 0V19"/><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke-dasharray="2 3"/></svg>`,
+    // Terra: Cubo (Cube)
+    cube: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73z"/><path d="M3.27 6.3L12 11l8.73-4.7M12 22V11"/></svg>`,
+    // Fogo: Chama (Flame)
+    flame: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5L12 2c3 7 4.5 9 7 11.5a3.5 3.5 0 1 1-5.71 4.5 3.5 3.5 0 1 1-4.99-4.5z"/></svg>`,
+    // Água: Onda (Wave)
+    wave: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-4 6-4 6 4 6 4 3-4 6-4V20H2z"/></svg>`,
+    // Ar/Pulso: Espiral (Spiral)
+    spiral: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 4.88c.83-.49 1.73-.76 2.68-.76 5.8 0 10.5 4.7 10.5 10.5S18.47 22 12.67 22s-10.5-4.7-10.5-10.5C2.17 6.2 5.37 3.5 9.07 2.38"/></svg>`,
+  };
+
+  /* ========== VIBE + SOM (Metal: Patch Core) ========== */
+  const applyVibe = (arch) => {
+    const cfg = ARCH[arch]||{};
+    const app = document.querySelector('#app') || document.body;
+    const color = cfg.overlay ? cfg.overlay.match(/rgba\(([^,]+),([^,]+),([^,]+),/)[1]+','+cfg.overlay.match(/rgba\(([^,]+),([^,]+),([^,]+),/)[2]+','+cfg.overlay.match(/rgba\(([^,]+),([^,]+),([^,]+),/)[3] : '255,255,255';
+    
+    // Metal - Ordem de Patch Pre: Define tokens/variáveis dinâmicas
+    app.setAttribute('data-theme', cfg.theme||'nebula');
+    document.documentElement.style.setProperty('--arch-overlay', cfg.overlay||'rgba(0,0,0,0)');
+    // Adiciona o brilho do arquétipo para a sombra
+    document.documentElement.style.setProperty('--arch-shadow', `0 0 18px rgba(${color}, .75)`);
+    
+    // Metal - Nomeação estável: PWA Memória de Pele
+    localStorage.setItem('infodose:arch.active', arch); 
+    
+    // TTS mantra
+    try{ if (cfg.mantra && 'speechSynthesis' in window){
+      // TTS é um evento assíncrono. Precisa de interação do user para rodar em mobile.
+      const u = new SpeechSynthesisUtterance(cfg.mantra); u.lang='pt-BR'; u.volume = 0.8; speechSynthesis.speak(u);
+    }}catch(e){ console.error("TTS Falhou:", e); }
+    
+    // WebAudio (riff metal 🎸)
+    if (cfg.element==='metal') powerChord(arch);
+  };
+
+  let _ac;
+  function ac(){ return _ac || (_ac = new (window.AudioContext||window.webkitAudioContext)()); }
+  // Simulação de assets/sounds/beep.wav (Beep Simples)
+  function beep(freq=432, ms=180){
+    const ctx = ac(), o = ctx.createOscillator(), g = ctx.createGain();
+    o.type='sine'; o.frequency.value=freq; o.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(.001,ctx.currentTime); g.gain.exponentialRampToValueAtTime(.25,ctx.currentTime+.02);
+    o.start(); o.stop(ctx.currentTime + ms/1000);
+  }
+  // Simulação de assets/sounds/metal_riff.ogg (Power Chord)
+  function powerChord(arch){ 
+    const f = (ARCH[arch]?.freq)||220, ctx=ac();
+    [1, 1.5, 2].forEach((m,i)=>{ // Fundamental, Quinta Justa (Metal), Oitava
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.type= i? 'square':'sawtooth'; o.frequency.value=f*m; o.connect(g); g.connect(ctx.destination);
+      g.gain.setValueAtTime(.0001,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(.15/(i+1),ctx.currentTime+.01);
+      g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.28);
+      o.start(); o.stop(ctx.currentTime+.30);
+    });
+  }
+
+  /* ========== HEAT (Telemetria Simbólica - Metal: Post Patch) ========== */
+  const HEAT = { hr:0, eng:0, ant:0, t0:Date.now() };
+  const drawHeat = () => {
+    const el = document.querySelector('#heat');
+    if(el) el.textContent = `HR:${HEAT.hr.toString().padStart(3, '0')} • ENG:${HEAT.eng.toString().padStart(3, '0')} • ANT:${HEAT.ant.toString().padStart(3, '0')} • TTA:${Math.round((Date.now()-HEAT.t0)/1000).toString().padStart(3, '0')}s`;
+  };
+  InfodoseBus.on('ARCH_PULSE', ()=>{ HEAT.hr++; drawHeat(); });
+  InfodoseBus.on('ACTION',     ()=>{ HEAT.eng++; drawHeat(); });
+  const markAnt = ()=>{ HEAT.ant++; drawHeat(); };
+
+  /* ========== UI (Madeira: UI Derivada da Semente) ========== */
+  function buildArchButtons(){
+    const bar = document.querySelector('#archBar'); if(!bar) return;
+    bar.innerHTML = '';
+    
+    // Madeira - UI derivada de dados (gera 12 botões a partir do JSON ARCH)
+    Object.entries(ARCH).forEach(([key,cfg])=>{
+      const b = document.createElement('button');
+      b.className = 'btn';
+      b.dataset.arch = key;
+      b.dataset.act  = 'pulse'; // Default action para o botão
+      
+      const iconSvg = ICONS[cfg.icon] || ICONS['ring']; // Fallback (Madeira: Seeds - default útil)
+      
+      b.innerHTML = `
+        <span class="btn-icon">${iconSvg}</span>
+        <span class="btn-label">${cfg.label}</span>
+        <span class="btn-element">${cfg.element.toUpperCase()}</span>
+      `;
+      bar.appendChild(b);
+    });
+  }
+  
+  // Fogo ativa o circuito (click/tap)
+  document.addEventListener('click', (ev)=>{
+    const b = ev.target.closest('[data-arch]'); if(!b) return;
+    const arch = b.getAttribute('data-arch');
+    const act  = b.getAttribute('data-act') || 'tap';
+    
+    // Madeira - Germina fluxo: intenção → evento JSON
+    InfodoseBus.emit('ARCH_PULSE', { arch, act, user:(localStorage.getItem('infodose:userName')||'você') });
+    // Madeira - Ramos: ACTION é um type em nível
+    InfodoseBus.emit('ACTION', { arch, act, route:`${arch}.${act}` });
+    
+    // Metal - Ordem de Patch Core
+    applyVibe(arch);
+    
+    // Água integra experiência (som)
+    if (ARCH[arch]?.element!=='metal') beep(ARCH[arch]?.freq||432, 120);
+  });
+
+  /* ========== INIT (Metal: Ordem de Patch Post/Contenção) ========== */
+  // Metal & Madeira: Restaura pele memorizada + Constrói UI
+  buildArchButtons();
+  (() => { 
+    // Metal: Restaura pele memoriza (PWA "memória de pele")
+    const last = localStorage.getItem('infodose:arch.active');
+    if (last && ARCH[last]) applyVibe(last);
+    
+    // Água: Integra Log passado na UI
+    const logBox = document.querySelector('#log');
+    if (logBox) {
+        // Itera o log no sentido inverso para injetar os mais antigos primeiro (log.unshift(evt) coloca o mais novo no topo)
+        InfodoseBus.dump().reverse().forEach(evt => { 
+            const d = document.createElement('div');
+            const hh = new Date(evt.ts).toLocaleTimeString();
+            const actionInfo = evt.act ? `(${evt.act})` : '';
+            const routeInfo = evt.route ? ` [${evt.route}]` : '';
+            d.className = 'log'; 
+            d.textContent = `[${hh}] ${evt.type} :: ${evt.arch||'-'} ${actionInfo}${routeInfo}`;
+            
+            // Adiciona no topo do container para que o mais novo fique no topo visual
+            if (logBox.firstChild) {
+              logBox.insertBefore(d, logBox.firstChild);
+            } else {
+              logBox.appendChild(d);
+            }
+        });
+        logBox.scrollTop = 0; // Vai para o topo
+    }
+    
+    // Metal: Post Patch - Telemetria (Marca a ativação da Antena)
+    drawHeat(); 
+    markAnt(); 
+  })();
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nebula Pro</title>
+<link rel="manifest" href="manifest.json">
+<style>
+/* MOBILE-FIRST VERTICAL HARD-LOCK */
+:root{
+  --c1:#9b5cff; --c2:#4cc3ff;            /* roxo→ciano do mockup */
+  --bg1:#0b0b12; --bg2:#141426;
+  --glass:rgba(255,255,255,0.06);
+  --line:rgba(255,255,255,0.08);
+  --radius:16px;
+  --shadow:0 6px 20px rgba(0,0,0,.45);
+  font-family: Inter, ui-sans-serif, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+}
+html,body{height:100%;margin:0;background:radial-gradient(1200px 800px at 20% 10%, #1f1840 0%, #0b0b12 60%), linear-gradient(180deg,#0b0b12,#0a0a10);color:#fff;-webkit-font-smoothing:antialiased}
+.app{min-height:100vh;max-width:420px;margin:0 auto;padding:calc(env(safe-area-inset-top)+24px) 18px calc(env(safe-area-inset-bottom)+24px)}
+/* Título */
+.header{display:flex;align-items:center;gap:10px}
+.header h1{margin:0;font-size:28px;font-weight:800;letter-spacing:.2px}
+.header .dot{width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:0 0 16px rgba(156, 95, 255,.45)}
+/* Listen */
+.listen-btn{display:block;width:100%;margin-top:20px;border:none;border-radius:22px;padding:16px 0;
+  font-size:20px;font-weight:700;color:#fff;cursor:pointer;box-shadow:0 10px 26px rgba(138,92,255,.2);
+  background:linear-gradient(90deg,var(--c1),var(--c2))}
+.listen-btn:active{opacity:.9}
+.micro-controls{margin-top:10px;display:flex;gap:10px;align-items:center;justify-content:space-between}
+.chip{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:8px 10px;display:flex;gap:8px;align-items:center}
+.chip label{font-size:12px;opacity:.9}
+.chip select,.chip input[type=range]{width:100%;background:transparent;color:#fff}
+/* Section */
+.section-title{margin:22px 2px 10px;font-weight:700;font-size:18px}
+/* Card Library */
+.card{background:rgba(255,255,255,.03);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+.list{display:flex;flex-direction:column}
+.item-wrap{position:relative;overflow:hidden;border-radius:14px}
+.item-bg-delete{position:absolute;inset:0;background:#ff3b30;display:flex;align-items:center;justify-content:flex-end;padding-right:16px;font-weight:700;letter-spacing:.4px}
+.doc{position:relative;display:flex;justify-content:space-between;align-items:center;padding:14px;border-radius:14px;background:rgba(0,0,0,.14);backdrop-filter:saturate(140%) blur(4px);border:1px solid rgba(255,255,255,.05)}
+.doc-title{font-weight:700;font-size:16px}
+.doc-sub{font-size:12px;opacity:.8;margin-top:2px}
+.play{min-width:40px;width:40px;height:40px;border:none;border-radius:50%;
+  background:linear-gradient(135deg,var(--c1),var(--c2));color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 0 12px rgba(160,120,255,.35);font-weight:700}
+.progress-line{height:4px;background:var(--line);border-radius:6px;overflow:hidden;margin-top:10px}
+.progress-line i{display:block;height:100%;background:linear-gradient(90deg,var(--c1),var(--c2));width:0%}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:13px;opacity:.95;margin:14px 4px 0}
+/* IndexedDB box */
+.box{margin-top:12px;background:rgba(255,255,255,.03);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+.label{font-size:13px;opacity:.95;margin:4px 0 8px}
+.bar{height:8px;background:rgba(255,255,255,.08);border-radius:8px;overflow:hidden}
+.bar span{display:block;height:100%;background:linear-gradient(90deg,var(--c1),var(--c2));width:0%}
+.clickable{cursor:pointer;user-select:none}
+/* Overlay Reader */
+.overlay{position:fixed;inset:0;background:rgba(3,3,6,.7);backdrop-filter:blur(8px);display:none;align-items:flex-end;z-index:50}
+.overlay.show{display:flex}
+.sheet{width:100%;max-width:420px;margin:0 auto;max-height:92vh;background:linear-gradient(180deg,rgba(25,25,40,.96),rgba(10,10,16,.98));border-radius:22px 22px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.6);overflow:hidden}
+.sheet-head{display:flex;align-items:center;gap:8px;padding:14px 14px 6px}
+.sheet-head .title{font-weight:700}
+.sheet-head .spacer{flex:1}
+.icon-btn{border:none;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);color:#fff;border-radius:12px;padding:8px 10px}
+.viewer{padding:10px 14px 14px;display:grid;grid-template-columns:1fr;gap:12px}
+.canvas-wrap{background:#05050a;border-radius:12px;padding:10px;display:flex;justify-content:center;align-items:center;min-height:360px}
+canvas{max-width:100%;height:auto;border-radius:8px;box-shadow:0 6px 16px rgba(0,0,0,.6)}
+.pbar{height:6px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden}
+.pbar i{display:block;height:100%;background:linear-gradient(90deg,var(--c1),var(--c2));width:0%}
+.para-list{max-height:220px;overflow:auto;display:flex;flex-direction:column;gap:8px}
+.para{padding:10px;border-radius:12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.04);font-size:14px}
+.para.active{background:linear-gradient(90deg,rgba(255,255,255,.08),rgba(255,255,255,.02))}
+.para .meta{display:flex;justify-content:space-between;gap:8px;font-size:12px;opacity:.8;margin-bottom:6px}
+.controls{display:flex;gap:8px;align-items:center}
+.controls .icon-btn{flex:1}
+.badge{font-size:12px;opacity:.85}
+/* Footer */
+footer{font-size:11px;opacity:.6;text-align:center;margin-top:24px}
+.hidden{display:none!important}
+input[type=file]{display:none}
+@media(min-width:900px){
+  .viewer{grid-template-columns:1fr 1fr}
+  .para-list{max-height:400px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="dot"></div>
+    <h1>Nebula Pro</h1>
+  </div>
+
+  <button id="listenBtn" class="listen-btn">Listen</button>
+
+  <!-- micro painel de voz/velocidade -->
+  <div class="micro-controls">
+    <div class="chip"><label>Voice</label><select id="voiceSelect"></select></div>
+    <div class="chip"><label>Speed</label><input id="rateRange" type="range" min="0.6" max="1.8" value="1" step="0.1"></div>
+  </div>
+
+  <div class="section-title">Library</div>
+  <div class="card">
+    <div id="libList" class="list">
+      <!-- preenchido dinamicamente -->
+    </div>
+  </div>
+
+  <div class="row">
+    <span>Library Usage</span>
+    <strong id="usageText">0 MB</strong>
+  </div>
+
+  <div class="section-title">IndexedDB</div>
+  <div class="box">
+    <div class="label clickable" id="importLabel">Import</div>
+    <div class="bar clickable" id="importBar"><span id="importFill" style="width:0%"></span></div>
+    <div class="label" style="margin-top:12px">Export</div>
+    <div class="bar clickable" id="exportBar"><span id="exportFill" style="width:0%"></span></div>
+  </div>
+
+  <footer>© 2025 Nebula Pro • Offline-ready</footer>
+</div>
+
+<!-- Overlay do leitor -->
+<div id="reader" class="overlay">
+  <div class="sheet">
+    <div class="sheet-head">
+      <button class="icon-btn" id="closeReader">Close</button>
+      <div class="spacer"></div>
+      <span class="badge">Bookmarks: <b id="bmCount">0</b></span>
+    </div>
+    <div class="viewer">
+      <div class="canvas-wrap">
+        <canvas id="pdfCanvas" width="600" height="800"></canvas>
+      </div>
+      <div>
+        <div class="para-list" id="paraList"></div>
+        <div class="controls" style="margin-top:10px">
+          <button class="icon-btn" id="prevPara">◀◀</button>
+          <button class="icon-btn" id="playPara">▶</button>
+          <button class="icon-btn" id="pausePara">II</button>
+          <button class="icon-btn" id="nextPara">▶▶</button>
+        </div>
+        <div class="pbar" style="margin-top:10px"><i id="speakProg"></i></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- inputs invisíveis -->
+<input id="fileInput" type="file" accept="application/pdf" />
+<input id="zipInput"  type="file" accept=".zip,application/zip,application/pdf" />
+
+<script>
+/* ========= Dependências externas ========= */
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('load fail '+src));document.head.appendChild(s)})}
+(async()=>{
+  try{
+    await loadScript('https://unpkg.com/pdfjs-dist@3.6.172/build/pdf.min.js');
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+    window.pdfjsLib = window['pdfjs-dist/build/pdf'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc='https://unpkg.com/pdfjs-dist@3.6.172/build/pdf.worker.min.js';
+  }catch(e){alert('Falha ao carregar PDF.js/JSZip'); console.error(e)}
+})();
+</script>
+
+<script>
+/* ========= Estado & elementos ========= */
+const listenBtn   = document.getElementById('listenBtn');
+const voiceSelect = document.getElementById('voiceSelect');
+const rateRange   = document.getElementById('rateRange');
+const libList     = document.getElementById('libList');
+const usageText   = document.getElementById('usageText');
+const importLabel = document.getElementById('importLabel');
+const importBar   = document.getElementById('importBar');
+const importFill  = document.getElementById('importFill');
+const exportBar   = document.getElementById('exportBar');
+const exportFill  = document.getElementById('exportFill');
+const fileInput   = document.getElementById('fileInput');
+const zipInput    = document.getElementById('zipInput');
+
+const reader      = document.getElementById('reader');
+const closeReader = document.getElementById('closeReader');
+const pdfCanvas   = document.getElementById('pdfCanvas');
+const paraList    = document.getElementById('paraList');
+const bmCount     = document.getElementById('bmCount');
+const prevPara    = document.getElementById('prevPara');
+const playPara    = document.getElementById('playPara');
+const pausePara   = document.getElementById('pausePara');
+const nextPara    = document.getElementById('nextPara');
+const speakProg   = document.getElementById('speakProg');
+const ctx         = pdfCanvas.getContext('2d');
+
+/* ========= IndexedDB ========= */
+const DB_NAME='nebula-pro-db', STORE='pdfs', DB_VERSION=1;
+function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,DB_VERSION);r.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains(STORE)){const s=db.createObjectStore(STORE,{keyPath:'id'});s.createIndex('by_name','name',{unique:false})}};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+async function dbPut(rec){const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(rec).onsuccess=()=>{db.close();res(true)};tx.onerror=()=>{db.close();rej(tx.error)}})}
+async function dbGetAll(){const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(STORE,'readonly');tx.objectStore(STORE).getAll().onsuccess=e=>{db.close();res(e.target.result||[])};tx.onerror=()=>{db.close();rej(tx.error)}})}
+async function dbGet(id){const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(STORE,'readonly');tx.objectStore(STORE).get(id).onsuccess=e=>{db.close();res(e.target.result||null)};tx.onerror=()=>{db.close();rej(tx.error)}})}
+async function dbDel(id){const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).delete(id).onsuccess=()=>{db.close();res(true)};tx.onerror=()=>{db.close();rej(tx.error)}})}
+
+/* ========= Estado de leitura ========= */
+let currentDocId=null, currentDocName=null, currentBlob=null, pdfDoc=null;
+let totalPages=0, currentPage=1, paragraphs=[], currentIdx=0, utter=null, voices=[];
+
+/* ========= Vozes ========= */
+function refreshVoices(){voices=speechSynthesis.getVoices()||[];voiceSelect.innerHTML='';voices.forEach(v=>{const o=document.createElement('option');o.value=v.name;o.textContent=`${v.name}${v.lang?(' ('+v.lang+')'):''}`;voiceSelect.appendChild(o)});}
+refreshVoices(); window.speechSynthesis.onvoiceschanged = refreshVoices;
+
+/* ========= Biblioteca (UI) ========= */
+function fmtMB(bytes){const mb=bytes/1048576; return mb.toLocaleString('pt-BR',{maximumFractionDigits:1,minimumFractionDigits:1})+' MB'}
+async function updateUsage(){const items=await dbGetAll();let s=0;items.forEach(i=>s+=(i.blob?.size||0));usageText.textContent = s?fmtMB(s):'0 MB'}
+
+function progressFor(id){const n=JSON.parse(localStorage.getItem('np.progress')||'{}');return n[id]||0}
+function setProgress(id,val){const n=JSON.parse(localStorage.getItem('np.progress')||'{}');n[id]=val;localStorage.setItem('np.progress',JSON.stringify(n))}
+
+function bookmarksFor(id){const n=JSON.parse(localStorage.getItem('np.bookmarks')||'{}');return n[id]||[]}
+function setBookmarks(id,arr){const n=JSON.parse(localStorage.getItem('np.bookmarks')||'{}');n[id]=arr;localStorage.setItem('np.bookmarks',JSON.stringify(n))}
+
+function makeItem(rec){
+  const wrap=document.createElement('div'); wrap.className='item-wrap';
+  const bg=document.createElement('div'); bg.className='item-bg-delete'; bg.textContent='Delete';
+  const row=document.createElement('div'); row.className='doc'; row.dataset.id=rec.id;
+
+  row.innerHTML=`<div>
+      <div class="doc-title">${escapeHTML(rec.name||'Document.pdf')}</div>
+      <div class="doc-sub">PDF document</div>
+      <div class="progress-line"><i style="width:${Math.round(progressFor(rec.id)*100)}%"></i></div>
+    </div>
+    <button class="play">▶</button>`;
+
+  // toque no título abre o leitor (overlay)
+  row.addEventListener('click', async (ev)=>{
+    if(ev.target.closest('.play')) return; // botão play tem outro handler
+    await openRecord(rec.id);
+    showReader();
+  });
+
+  // play direto
+  row.querySelector('.play').addEventListener('click', async ()=>{
+    await openRecord(rec.id);
+    startSpeak();
+  });
+
+  // swipe-to-delete
+  setupSwipeDelete(wrap, row, bg, async ()=>{
+    await dbDel(rec.id);
+    await renderLibrary();
+  });
+
+  wrap.appendChild(bg); wrap.appendChild(row);
+  return wrap;
+}
+
+async function renderLibrary(){
+  const items=await dbGetAll();
+  libList.innerHTML='';
+  if(!items.length){
+    const empty=document.createElement('div');
+    empty.className='doc';
+    empty.innerHTML='<div><div class="doc-title">Sem documentos</div><div class="doc-sub">Use Import para adicionar PDFs</div></div><button class="play" disabled>▶</button>';
+    libList.appendChild(empty);
+  }else{
+    items.sort((a,b)=>b.savedAt-a.savedAt);
+    items.forEach(rec=>libList.appendChild(makeItem(rec)));
+  }
+  updateUsage();
+}
+
+/* ========= Swipe delete com animação ========= */
+function setupSwipeDelete(container,row,bg,onDelete){
+  let startX=0, curX=0, dragging=false, threshold=90, maxSlide=120;
+
+  function onStart(e){
+    dragging=true; startX=(e.touches?e.touches[0].clientX:e.clientX); row.style.transition='none'; bg.style.opacity='1'
+  }
+  function onMove(e){
+    if(!dragging) return;
+    curX=(e.touches?e.touches[0].clientX:e.clientX);
+    let dx=curX-startX;
+    if(dx>0) dx=0;            // só arrasta para a esquerda
+    if(dx< -maxSlide) dx= -maxSlide;
+    row.style.transform=`translateX(${dx}px)`;
+  }
+  function onEnd(){
+    if(!dragging) return; dragging=false;
+    const dx=parseFloat(row.style.transform.replace(/translateX\(([-0-9.]+)px\)/,'$1'))||0;
+    row.style.transition='transform .2s ease';
+    if(Math.abs(dx)>threshold){
+      row.style.transform='translateX(-110%)';
+      setTimeout(()=>container.remove(),220);
+      onDelete();
+    }else{
+      row.style.transform='translateX(0)';
+      setTimeout(()=>bg.style.opacity='0',200);
+    }
+  }
+  row.addEventListener('touchstart',onStart,{passive:true});
+  row.addEventListener('touchmove', onMove,{passive:true});
+  row.addEventListener('touchend',  onEnd);
+  row.addEventListener('mousedown', onStart);
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup',   onEnd);
+}
+
+/* ========= Import / Export ========= */
+importLabel.addEventListener('click', ()=>zipInput.click());
+importBar.addEventListener('click',   ()=>zipInput.click());
+
+zipInput.addEventListener('change', async (ev)=>{
+  const file = ev.target.files[0];
+  if(!file) return;
+  const isZip = /\.zip$/i.test(file.name);
+  importFill.style.width='10%';
+  try{
+    if(isZip){
+      const JSZip = window.JSZip;
+      const zip = await JSZip.loadAsync(file);
+      const names = Object.keys(zip.files);
+      let done=0;
+      for(const n of names){
+        const f=zip.files[n]; if(f.dir) continue;
+        if(!/\.pdf$/i.test(n)) continue;
+        const u8 = await f.async('uint8array');
+        const blob = new Blob([u8],{type:'application/pdf'});
+        const id='pdf-'+Date.now()+'-'+Math.random().toString(16).slice(2);
+        await dbPut({id,name:n.split('/').pop(),blob,savedAt:Date.now(),pages:0});
+        done++;
+        importFill.style.width = Math.min(90, Math.round((done/names.length)*100))+'%';
+        await wait(40);
+      }
+    }else{
+      // PDF avulso
+      const ab = await file.arrayBuffer();
+      const blob = new Blob([new Uint8Array(ab)],{type:'application/pdf'});
+      const id='pdf-'+Date.now();
+      await dbPut({id,name:file.name,blob,savedAt:Date.now(),pages:0});
+      importFill.style.width='90%';
+    }
+    await renderLibrary();
+    importFill.style.width='100%';
+    setTimeout(()=>importFill.style.width='0%',600);
+  }catch(e){
+    console.error(e); alert('Erro ao importar: '+e.message);
+    importFill.style.width='0%';
+  }finally{
+    zipInput.value='';
+  }
+});
+
+exportBar.addEventListener('click', exportAll);
+async function exportAll(){
+  try{
+    const JSZip = window.JSZip;
+    const items=await dbGetAll(); if(!items.length){alert('Biblioteca vazia.');return}
+    const zip=new JSZip(); const meta=[];
+    let done=0;
+    for(const it of items){
+      const safe=(it.name||('pdf-'+it.id)).replace(/[^a-z0-9_.\-]/ig,'_');
+      zip.file(safe, it.blob);
+      meta.push({id:it.id,name:it.name,pages:it.pages||0,savedAt:it.savedAt});
+      done++; exportFill.style.width = Math.round((done/items.length)*90)+'%';
+      await wait(30);
+    }
+    zip.file('metadata.json', JSON.stringify(meta,null,2));
+    const content=await zip.generateAsync({type:'blob'});
+    const url=URL.createObjectURL(content);
+    const a=document.createElement('a'); a.href=url; a.download='nebula-library.zip'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    exportFill.style.width='100%'; setTimeout(()=>exportFill.style.width='0%',600);
+  }catch(e){console.error(e); alert('Erro ao exportar: '+e.message); exportFill.style.width='0%'}
+}
+
+/* ========= Abrir registro e extrair texto ========= */
+async function openRecord(id){
+  const rec=await dbGet(id); if(!rec){alert('Arquivo não encontrado');return}
+  currentDocId=id; currentDocName=rec.name; currentBlob=rec.blob;
+  // carrega PDF
+  const ab = await rec.blob.arrayBuffer();
+  pdfDoc = await pdfjsLib.getDocument({data:new Uint8Array(ab)}).promise;
+  totalPages = pdfDoc.numPages; currentPage=1;
+  paragraphs=[]; currentIdx=0;
+  await renderPage(currentPage);
+  await extractParagraphs();
+  renderParagraphList();
+  updateSpeakProgress();
+  bmCount.textContent = bookmarksFor(currentDocId).length;
+}
+
+/* ========= Overlay ========= */
+function showReader(){reader.classList.add('show')}
+function hideReader(){reader.classList.remove('show')}
+closeReader.addEventListener('click', hideReader);
+
+/* ========= Renderização de página ========= */
+async function renderPage(n){
+  const page = await pdfDoc.getPage(n);
+  const viewport = page.getViewport({scale:1.3});
+  pdfCanvas.width = viewport.width; pdfCanvas.height = viewport.height;
+  await page.render({canvasContext:ctx,viewport}).promise;
+}
+
+/* ========= Extração de parágrafos ========= */
+async function extractParagraphs(){
+  paragraphs=[];
+  for(let p=1;p<=pdfDoc.numPages;p++){
+    const page=await pdfDoc.getPage(p);
+    const content=await page.getTextContent();
+    const text=(content.items||[]).map(i=>i.str).join(' ').replace(/\s{2,}/g,' ').trim();
+    let parts = text.split(/(\.|\?|!)(\s+|$)/).reduce((acc,cur,idx,arr)=>{
+      if(idx%3===0){ const full=(arr[idx]||'')+(arr[idx+1]||''); if(full.trim()) acc.push(full.trim()) }
+      return acc;
+    },[]);
+    if(!parts.length && text) parts=[text];
+    parts.forEach((t,i)=>{
+      if(t.length>600){ for(let k=0;k<t.length;k+=420){ paragraphs.push({page:p,text:t.slice(k,k+420).trim()}) } }
+      else{ paragraphs.push({page:p,text:t}) }
+    });
+    await wait(5);
+  }
+}
+
+/* ========= Lista de parágrafos + favoritos ========= */
+function renderParagraphList(){
+  paraList.innerHTML='';
+  paragraphs.forEach((par,idx)=>{
+    const el=document.createElement('div'); el.className='para'; el.dataset.idx=idx;
+    const star='★';
+    el.innerHTML=`<div class="meta"><span>p.${par.page}</span><button class="icon-btn" data-bm="${idx}">${star}</button></div><div>${escapeHTML(par.text)}</div>`;
+    el.addEventListener('click', ()=>{currentIdx=idx; playCurrent()});
+    paraList.appendChild(el);
+  });
+  highlightActive();
+}
+
+function highlightActive(){
+  paraList.querySelectorAll('.para').forEach(n=>n.classList.remove('active'));
+  const active=paraList.querySelector(`.para[data-idx="${currentIdx}"]`);
+  if(active){ active.classList.add('active'); active.scrollIntoView({behavior:'smooth',block:'center'}) }
+}
+
+/* ========= TTS ========= */
+function speak(text){
+  if(utter){ speechSynthesis.cancel(); utter=null }
+  utter=new SpeechSynthesisUtterance(text);
+  utter.rate=parseFloat(rateRange.value)||1;
+  const v=voices.find(x=>x.name===voiceSelect.value); if(v) utter.voice=v;
+  utter.onend = ()=>{
+    currentIdx = Math.min(currentIdx+1, paragraphs.length-1);
+    setProgress(currentDocId, (currentIdx+1)/Math.max(1,paragraphs.length));
+    updateProgressLine();
+    updateSpeakProgress();
+    if(currentIdx < paragraphs.length-1){ playCurrent() }
+  };
+  speechSynthesis.speak(utter);
+}
+
+function playCurrent(){
+  if(!paragraphs[currentIdx]) return;
+  const pg=paragraphs[currentIdx].page;
+  if(pg!==currentPage){ currentPage=pg; renderPage(currentPage) }
+  speak(paragraphs[currentIdx].text);
+  highlightActive();
+}
+
+function startSpeak(){
+  if(!currentDocId){ alert('Selecione um PDF na Library.'); return }
+  if(!paragraphs.length){ alert('Aguarde a extração do texto.'); return }
+  playCurrent();
+}
+
+listenBtn.addEventListener('click', startSpeak);
+playPara.addEventListener('click', playCurrent);
+pausePara.addEventListener('click', ()=>speechSynthesis.pause());
+prevPara.addEventListener('click', ()=>{
+  speechSynthesis.cancel();
+  currentIdx = Math.max(0, currentIdx-1);
+  highlightActive(); playCurrent();
+});
+nextPara.addEventListener('click', ()=>{
+  speechSynthesis.cancel();
+  currentIdx = Math.min(paragraphs.length-1, currentIdx+1);
+  highlightActive(); playCurrent();
+});
+
+function updateSpeakProgress(){
+  const pct = paragraphs.length? Math.round((currentIdx+1)/paragraphs.length*100):0;
+  speakProg.style.width = pct+'%';
+}
+
+/* ========= Favoritos (bookmarks por parágrafo) ========= */
+paraList.addEventListener('click', (ev)=>{
+  const bmBtn = ev.target.closest('[data-bm]');
+  if(!bmBtn) return;
+  const idx=parseInt(bmBtn.dataset.bm,10);
+  const list = bookmarksFor(currentDocId);
+  if(!list.includes(idx)) list.push(idx);
+  setBookmarks(currentDocId, Array.from(new Set(list)));
+  bmCount.textContent = bookmarksFor(currentDocId).length;
+  ev.stopPropagation();
+});
+
+/* ========= Input de PDF avulso (atalho: long-press no título Nebula abre file picker) ========= */
+document.querySelector('.header').addEventListener('contextmenu', e=>{e.preventDefault(); fileInput.click()});
+document.querySelector('.header').addEventListener('dblclick', ()=>fileInput.click());
+fileInput.addEventListener('change', async (e)=>{
+  const f=e.target.files[0]; if(!f) return;
+  const ab=await f.arrayBuffer();
+  const blob=new Blob([new Uint8Array(ab)],{type:'application/pdf'});
+  const id='pdf-'+Date.now();
+  await dbPut({id,name:f.name,blob,savedAt:Date.now(),pages:0});
+  await renderLibrary();
+  e.target.value='';
+});
+
+/* ========= Utilidades ========= */
+function wait(ms){return new Promise(r=>setTimeout(r,ms))}
+function escapeHTML(s){return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function updateProgressLine(){
+  const row = libList.querySelector(`[data-id="${currentDocId}"]`);
+  if(row){ const i=row.querySelector('.progress-line i'); if(i){ i.style.width=Math.round(progressFor(currentDocId)*100)+'%'} }
+}
+
+/* ========= PWA ========= */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
+
+/* ========= Boot ========= */
+renderLibrary();
+</script>
+</body>
+</html>
