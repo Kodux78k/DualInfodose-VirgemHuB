@@ -1,4 +1,4 @@
-const CACHE_NAME = "cr-infodose-cache-v2";
+const CACHE_NAME = "hub-infodose-cache-v4";
 const ASSETS = [
   "./",
   "./index.html",
